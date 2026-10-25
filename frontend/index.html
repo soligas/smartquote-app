@@ -130,6 +130,10 @@
         <button class="px-3 py-1.5 rounded-lg font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-700/60 transition-all" onclick="toggleCompanyModal()">
           Mis Datos / Logo
         </button>
+        <button class="px-3 py-1.5 rounded-lg font-semibold text-emerald-700 dark:text-emerald-300 hover:text-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-all flex items-center gap-1.5" onclick="openWelcomeTrustModal()" title="¿Cómo funciona SmartQuote y qué garantía de seguridad ofrece?">
+          <i class="iconoir-info-circle text-sm text-emerald-600 dark:text-emerald-400"></i>
+          <span>¿Cómo funciona?</span>
+        </button>
         <button class="px-3 py-1.5 rounded-lg font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 hover:bg-blue-50/70 dark:hover:bg-blue-900/40 transition-all flex items-center gap-1.5" onclick="openFeedbackModal()" title="¿Qué podemos mejorar o qué te gustaría agregar?">
           <i class="iconoir-chat-bubble-empty text-sm"></i>
           <span>¿Ideas o Mejoras?</span>
@@ -138,6 +142,11 @@
 
       <!-- 3. Acciones Ordenadas por Jerarquía (Derecha) -->
       <div class="flex items-center gap-1 sm:gap-2 shrink-0">
+        <!-- Acceso directo a ¿Cómo funciona? en Móvil -->
+        <button onclick="openWelcomeTrustModal()" class="lg:hidden flex items-center gap-1 p-2 rounded-xl text-xs font-semibold bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 transition-all shadow-sm" title="¿Cómo funciona SmartQuote?">
+          <i class="iconoir-info-circle text-base text-emerald-600 dark:text-emerald-400"></i>
+        </button>
+
         <!-- Acceso directo a Historial en Móvil -->
         <button onclick="openHistoryModal()" class="lg:hidden flex items-center gap-1 p-2 sm:px-2.5 sm:py-2 rounded-xl text-xs font-semibold bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/60 dark:hover:bg-blue-900/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 transition-all shadow-sm" title="Ver cotizaciones anteriores y abonos">
           <i class="iconoir-folder text-base sm:text-sm"></i>
@@ -177,6 +186,39 @@
 
     <!-- WORKSPACE DEL CONTRATISTA (MODO EDITOR) -->
     <div id="contractorEditorWorkspace" class="space-y-6">
+
+    <!-- BANNER DE CONFIANZA & EXPLICACIÓN TRANSPARENTE (ANTI-ESTAFA) -->
+    <div id="welcomeTrustBanner" class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-700 via-indigo-700 to-blue-800 text-white p-4 sm:p-5 shadow-lg border-2 border-blue-400/40 transition-all">
+      <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div class="flex items-start gap-3">
+          <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center shrink-0 shadow-sm text-white mt-0.5">
+            <span class="text-xl">🇨🇴</span>
+          </div>
+          <div class="space-y-1">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="text-[10px] font-mono font-bold uppercase tracking-wider bg-emerald-400 text-slate-950 px-2.5 py-0.5 rounded-full">100% Gratuito &amp; Seguro</span>
+              <span class="text-[10px] text-blue-200 font-mono">Sin claves de bancos • Sin descargas raras</span>
+            </div>
+            <h2 class="text-sm sm:text-base font-black tracking-tight text-white">
+              SmartQuote Colombia: Tu cotizador profesional oficial y recaudo de anticipos
+            </h2>
+            <p class="text-xs text-blue-100 max-w-2xl font-sans leading-relaxed">
+              Herramienta web creada para maestros de obra, técnicos y contratistas colombianos. Te permite desglosar materiales reales, calcular fletes por distancia y cobrar tu anticipo del 50% por Nequi o Bancolombia con firma digital, todo desde tu celular y sin registros complicados.
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 shrink-0 self-end md:self-center pt-2 md:pt-0">
+          <button type="button" onclick="openWelcomeTrustModal()" class="px-3.5 py-2 rounded-xl bg-white text-blue-900 hover:bg-blue-50 text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 whitespace-nowrap">
+            <i class="iconoir-info-circle text-base text-blue-600"></i>
+            <span>¿Cómo funciona?</span>
+          </button>
+          <button type="button" onclick="cerrarWelcomeBanner()" class="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all text-xs" title="Ocultar este aviso">
+            <i class="iconoir-xmark text-base"></i>
+          </button>
+        </div>
+      </div>
+    </div>
 
     <!-- SUB-HEADER CON ESTADO Y ACCESOS RÁPIDOS -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200 dark:border-slate-800">
@@ -2174,6 +2216,111 @@ flete de acarreo 50000" class="w-full p-3 bg-slate-50 dark:bg-slate-800/80 borde
         <span>Activar Versión Pro</span>
       </button>
       <p class="text-[10px] text-slate-500 dark:text-slate-400 text-center font-sans">Garantía total de 7 días. Si no te gusta, te devolvemos el dinero.</p>
+    </div>
+  </div>
+
+  <!-- MODAL: GUÍA DE BIENVENIDA, CONFIANZA Y CÓMO FUNCIONA SMARTQUOTE (ANTI-ESTAFA) -->
+  <div class="fixed inset-0 z-50 bg-slate-900/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 overflow-y-auto hidden" id="welcomeTrustModal" onclick="if(event.target === this) closeWelcomeTrustModal(false)">
+    <div class="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border-2 border-slate-200 dark:border-slate-800 overflow-hidden my-auto max-h-[94vh] flex flex-col font-sans animate-in fade-in zoom-in-95 duration-150">
+      
+      <!-- Top Bar Modal -->
+      <div class="p-4 sm:p-5 bg-gradient-to-r from-blue-700 via-indigo-700 to-blue-800 text-white flex items-center justify-between shadow-sm">
+        <div class="flex items-center gap-3">
+          <div class="w-11 h-11 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30 text-white shrink-0">
+            <i class="iconoir-shield-check text-2xl text-emerald-300"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="text-sm sm:text-base font-black tracking-tight">¿Qué es SmartQuote y cómo funciona?</h3>
+              <span class="text-[9px] font-mono font-bold bg-emerald-400 text-slate-950 px-2 py-0.5 rounded-full uppercase tracking-wider">Transparente</span>
+            </div>
+            <span class="text-xs text-blue-100 block">La herramienta segura para trabajadores independientes de Colombia</span>
+          </div>
+        </div>
+        <button type="button" class="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-all shrink-0" onclick="closeWelcomeTrustModal(false)">
+          <i class="iconoir-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <!-- Contenido Explicativo -->
+      <div class="p-5 sm:p-6 overflow-y-auto space-y-4">
+        
+        <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed font-sans">
+          Sabemos que en internet abundan páginas dudosas o fraudulentas. <strong>SmartQuote</strong> fue creada con el propósito opuesto: <strong>darle formalidad, seguridad y dignidad al trabajo de los maestros y técnicos en Colombia</strong>, para que coticen rápido y aseguren su anticipo sin riesgos.
+        </p>
+
+        <!-- 3 Tarjetas de Confianza y Funcionamiento -->
+        <div class="space-y-3">
+          
+          <!-- Pilar 1: Seguridad y Cero Trampas -->
+          <div class="p-3.5 sm:p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border-2 border-slate-200 dark:border-slate-700 flex items-start gap-3">
+            <div class="w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-300 dark:border-emerald-700 mt-0.5">
+              <i class="iconoir-lock text-xl"></i>
+            </div>
+            <div class="space-y-1">
+              <strong class="text-xs sm:text-sm font-black text-slate-900 dark:text-white block">
+                1. 100% Seguro y Privado (Cero Datos Bancarios Raros)
+              </strong>
+              <p class="text-xs text-slate-600 dark:text-slate-300 font-sans leading-relaxed">
+                No te pedimos contraseñas de tus bancos, ni número de tarjeta de crédito, ni descargar aplicaciones dudosas. Tus cotizaciones se guardan de forma segura en tu propio celular o navegador. Eres 100% dueño de tus números.
+              </p>
+            </div>
+          </div>
+
+          <!-- Pilar 2: Cotizaciones en 60 Segundos -->
+          <div class="p-3.5 sm:p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border-2 border-slate-200 dark:border-slate-700 flex items-start gap-3">
+            <div class="w-9 h-9 rounded-xl bg-blue-100 dark:bg-blue-950/80 text-blue-700 dark:text-blue-400 flex items-center justify-center shrink-0 border border-blue-300 dark:border-blue-700 mt-0.5">
+              <i class="iconoir-flash text-xl"></i>
+            </div>
+            <div class="space-y-1">
+              <strong class="text-xs sm:text-sm font-black text-slate-900 dark:text-white block">
+                2. Cotiza en 60 Segundos con Insumos Reales de Colombia
+              </strong>
+              <p class="text-xs text-slate-600 dark:text-slate-300 font-sans leading-relaxed">
+                Toca la plantilla de tu oficio (Obra blanca/Drywall, Plomería, Electricidad, Pintura, Carpintería, Aire Acondicionado o Cerrajería) o habla al micrófono. El sistema calcula materiales, mano de obra, imprevistos y transporte automáticamente.
+              </p>
+            </div>
+          </div>
+
+          <!-- Pilar 3: Cobro de Anticipo y Firma Digital -->
+          <div class="p-3.5 sm:p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border-2 border-slate-200 dark:border-slate-700 flex items-start gap-3">
+            <div class="w-9 h-9 rounded-xl bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-400 flex items-center justify-center shrink-0 border border-amber-300 dark:border-amber-700 mt-0.5">
+              <i class="iconoir-qr-code text-xl"></i>
+            </div>
+            <div class="space-y-1">
+              <strong class="text-xs sm:text-sm font-black text-slate-900 dark:text-white block">
+                3. Asegura el 50% de Anticipo por Nequi o Bancolombia
+              </strong>
+              <p class="text-xs text-slate-600 dark:text-slate-300 font-sans leading-relaxed">
+                Al enviar por WhatsApp, tu cliente recibe una propuesta formal en PDF con tu propio logo, código QR directo a tu cuenta y una caja para firmar con el dedo en su pantalla. Tus costos internos y margen de ganancia quedan 100% ocultos.
+              </p>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Banner de Respaldo -->
+        <div class="p-3 bg-blue-50/90 dark:bg-blue-950/40 rounded-xl border border-blue-200/80 dark:border-blue-800 flex items-center gap-3">
+          <div class="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center shrink-0 font-black text-xs">
+            SQ
+          </div>
+          <div class="text-xs text-blue-950 dark:text-blue-200 font-sans">
+            Desarrollado con el respaldo de <strong>Arriero Pro</strong> para trabajadores independientes y pymes de Colombia.
+          </div>
+        </div>
+
+        <!-- Botones de Acción -->
+        <div class="pt-2 flex flex-col sm:flex-row items-center gap-2.5">
+          <button type="button" onclick="closeWelcomeTrustModal(true)" class="w-full sm:flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-md shadow-blue-600/25 transition-all">
+            <i class="iconoir-check text-base"></i>
+            <span>¡Entendido, empezar a cotizar gratis!</span>
+          </button>
+          <button type="button" onclick="closeWelcomeTrustModal(false)" class="w-full sm:w-auto px-4 py-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold transition-all">
+            Cerrar
+          </button>
+        </div>
+
+      </div>
     </div>
   </div>
 

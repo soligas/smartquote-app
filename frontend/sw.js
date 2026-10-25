@@ -1,4 +1,4 @@
-const CACHE_NAME = 'smartquote-v25';
+const CACHE_NAME = 'smartquote-v26';
 const PRECACHE_ASSETS = [
   '/',
   '/index.html',

@@ -4008,11 +4008,37 @@ Tengo una sugerencia / idea de mejora:
   closeFeedbackModal();
 }
 
+// ==========================================
+// MODAL & BANNER DE CONFIANZA / ONBOARDING (ANTI-ESTAFA)
+// ==========================================
+function openWelcomeTrustModal() {
+  const modal = document.getElementById('welcomeTrustModal');
+  if (modal) modal.classList.remove('hidden');
+}
+
+function closeWelcomeTrustModal(dontShowAgain = false) {
+  const modal = document.getElementById('welcomeTrustModal');
+  if (modal) modal.classList.add('hidden');
+  if (dontShowAgain) {
+    localStorage.setItem('sq_welcome_seen', 'true');
+  }
+}
+
+function cerrarWelcomeBanner() {
+  const banner = document.getElementById('welcomeTrustBanner');
+  if (banner) banner.classList.add('hidden');
+  localStorage.setItem('sq_trust_banner_closed', 'true');
+}
+
 window.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
-    const modal = document.getElementById('feedbackModal');
-    if (modal && !modal.classList.contains('hidden')) {
+    const feedbackModal = document.getElementById('feedbackModal');
+    if (feedbackModal && !feedbackModal.classList.contains('hidden')) {
       closeFeedbackModal();
+    }
+    const welcomeModal = document.getElementById('welcomeTrustModal');
+    if (welcomeModal && !welcomeModal.classList.contains('hidden')) {
+      closeWelcomeTrustModal(false);
     }
   }
 });
@@ -4033,6 +4059,20 @@ document.addEventListener('DOMContentLoaded', async () => {
   updateCalendarMilestones();
   calculateRouteFreight(false);
   await checkUrlCotizacion();
+
+  // Verificar estado del banner de confianza
+  if (localStorage.getItem('sq_trust_banner_closed') === 'true') {
+    const banner = document.getElementById('welcomeTrustBanner');
+    if (banner) banner.classList.add('hidden');
+  }
+
+  // Mostrar modal de bienvenida en la primera visita (solo en modo cotizador, no en vista cliente)
+  const isClientView = window.location.search.includes('view=client');
+  if (!isClientView && !localStorage.getItem('sq_welcome_seen')) {
+    setTimeout(() => {
+      openWelcomeTrustModal();
+    }, 450);
+  }
 
   // Registrar Service Worker para soporte Offline / PWA
   if ('serviceWorker' in navigator) {
