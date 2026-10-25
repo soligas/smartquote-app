@@ -926,7 +926,16 @@ function renderDynamicQRCodes() {
 }
 
 // Compartir cotización directa por WhatsApp con mensaje estructurado profesional
-function enviarPorWhatsApp() {
+async function enviarPorWhatsApp() {
+  // Asegurar que la cotización esté guardada en el servidor para generar enlace real
+  if (!currentQuoteCode) {
+    try {
+      await guardarCotizacionActual();
+    } catch (e) {
+      console.warn('Auto-guardado antes de WhatsApp:', e);
+    }
+  }
+
   const cliente = document.getElementById('clientNameInput') ? document.getElementById('clientNameInput').value : 'Cliente';
   const servicio = document.getElementById('serviceNameInput') ? document.getElementById('serviceNameInput').value : 'Servicio Técnico';
   const total = document.getElementById('statClientTotal') ? document.getElementById('statClientTotal').innerText : '$1.373.077';
