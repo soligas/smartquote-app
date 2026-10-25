@@ -1,0 +1,274 @@
+/* CotizaSeguro Pro / SmartQuote - White / Light Theme Design System */
+
+/* Root Font Definition & Ergonomics */
+:root {
+  --font-sans: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-tech: 'Space Grotesk', sans-serif;
+}
+
+@layer base {
+  html, body {
+    margin: 0;
+    padding: 0;
+  }
+  html {
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    background-color: #f8fafc;
+    color: #0f172a;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+  html.dark {
+    background-color: #090d16;
+    color: #f8fafc;
+  }
+  body {
+    overscroll-behavior: none;
+    background-color: #f8fafc;
+    color: #0f172a;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+  html.dark body {
+    background-color: #090d16;
+    color: #f8fafc;
+  }
+}
+
+/* Tabular Figures (tnum) for Financial Numbers */
+.font-mono,
+.item-cost,
+.item-qty,
+#statBaseCost,
+#statContingencyCost,
+#statSubtotalCost,
+#statNetProfit,
+#statClientTotal,
+#sidebarAdvanceAmount,
+#finalPaymentBadge,
+#qrAdvanceAmountBadge,
+#swissGrandTotal,
+#swissAdvanceTarget,
+#swissFinalTarget,
+#checkoutAdvanceAmount,
+#checkoutTotalAmount {
+  font-family: var(--font-mono) !important;
+  font-variant-numeric: tabular-nums lining-nums !important;
+  -moz-font-feature-settings: "tnum" 1, "lnum" 1 !important;
+  -webkit-font-feature-settings: "tnum" 1, "lnum" 1 !important;
+  font-feature-settings: "tnum" 1, "lnum" 1 !important;
+}
+
+/* Typographic Tracking & Rhythm */
+.tracking-tighter {
+  letter-spacing: -0.035em;
+}
+.tracking-tight {
+  letter-spacing: -0.02em;
+}
+.tracking-normal {
+  letter-spacing: 0em;
+}
+.tracking-wider {
+  letter-spacing: 0.05em;
+}
+.tracking-widest {
+  letter-spacing: 0.08em;
+}
+
+/* Headings Typographic Balance */
+h1, h2, h3, h4 {
+  text-wrap: balance;
+  letter-spacing: -0.02em;
+}
+
+/* Swiss Archival Document - Pure International Typographic Style */
+.swiss-document {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif !important;
+  letter-spacing: -0.012em;
+  color: #0f172a;
+}
+.swiss-document th,
+.swiss-document .swiss-header-title {
+  letter-spacing: -0.02em;
+}
+
+/* Iconoir Visual Alignment */
+*[class^='iconoir-'],
+*[class*=' iconoir-'] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  line-height: 1;
+}
+
+/* Scrollbar Customization for Clean Light & Dark Themes */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+html.dark ::-webkit-scrollbar-track {
+  background: #0b0f19;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+html.dark ::-webkit-scrollbar-thumb {
+  background: #1e293b;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+html.dark ::-webkit-scrollbar-thumb:hover {
+  background: #334155;
+}
+
+/* Micro-animations */
+@keyframes pulseSubtle {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.85; transform: scale(0.99); }
+}
+
+.animate-pulse-subtle {
+  animation: pulseSubtle 2.5s infinite ease-in-out;
+}
+
+/* Print Stylesheet for High-Precision Swiss Archival Quotations */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #swissModal, #swissModal * {
+    visibility: visible;
+  }
+  #swissModal {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    background: #ffffff !important;
+    display: block !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  #swissModal .bg-slate-100 {
+    background: transparent !important;
+    padding: 0 !important;
+  }
+  #swissModal .shadow-2xl {
+    box-shadow: none !important;
+  }
+}
+
+/* ============================================================
+   WATERMARK / MARCA DE AGUA PARA VISTA PREVIA NO PAGADA
+   ============================================================ */
+.swiss-document {
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+.swiss-watermark-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  align-items: center;
+  overflow: hidden;
+  user-select: none;
+  padding: 40px 20px;
+}
+
+.swiss-watermark-pattern {
+  position: absolute;
+  inset: -50%;
+  width: 200%;
+  height: 200%;
+  background-image: repeating-linear-gradient(
+    -35deg,
+    transparent,
+    transparent 120px,
+    rgba(220, 38, 38, 0.035) 120px,
+    rgba(220, 38, 38, 0.035) 240px
+  );
+  pointer-events: none;
+}
+
+.swiss-watermark-stamp {
+  position: relative;
+  transform: rotate(-25deg);
+  border: 4px dashed rgba(220, 38, 38, 0.32);
+  border-radius: 16px;
+  padding: 18px 42px;
+  text-align: center;
+  background: rgba(254, 242, 242, 0.45);
+  backdrop-filter: blur(1px);
+  -webkit-backdrop-filter: blur(1px);
+  box-shadow: 0 10px 30px rgba(220, 38, 38, 0.08);
+  max-width: 90%;
+}
+
+.swiss-watermark-title {
+  font-family: 'Space Grotesk', 'Inter', sans-serif;
+  font-size: clamp(2rem, 5vw, 3.4rem);
+  font-weight: 900;
+  color: rgba(220, 38, 38, 0.38);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.swiss-watermark-subtitle {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: clamp(0.75rem, 1.4vw, 0.95rem);
+  font-weight: 800;
+  color: rgba(220, 38, 38, 0.65);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  margin-top: 8px;
+  line-height: 1.2;
+}
+
+.swiss-watermark-ghost-text {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: clamp(0.95rem, 1.8vw, 1.25rem);
+  font-weight: 800;
+  color: rgba(220, 38, 38, 0.12);
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  transform: rotate(-25deg);
+  white-space: nowrap;
+}
+
+/* Ocultar marca de agua cuando el documento ha sido pagado */
+.document-paid #swissWatermarkOverlay,
+.quote-is-paid #swissWatermarkOverlay,
+#swissModal.document-paid #swissWatermarkOverlay {
+  display: none !important;
+}
+
+/* En impresión: Si está pagado, se oculta la marca de agua */
+@media print {
+  .document-paid #swissWatermarkOverlay,
+  .quote-is-paid #swissWatermarkOverlay,
+  #swissModal.document-paid #swissWatermarkOverlay {
+    display: none !important;
+  }
+}
+

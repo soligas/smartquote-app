@@ -1,0 +1,2347 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>SmartQuote / CotizaSeguro Pro - Presupuesto &amp; Margen Inteligente</title>
+  
+  <meta name="theme-color" content="#2563eb"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+  <link rel="manifest" href="./manifest.json"/>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='25' fill='%232563eb'/><path d='M30 50 L45 65 L70 35' stroke='white' stroke-width='10' stroke-linecap='round' stroke-linejoin='round' fill='none'/></svg>"/>
+  
+  <!-- Tipografía Profesional UX / CX (Plus Jakarta Sans + Inter + Space Grotesk + JetBrains Mono) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""/>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Dancing+Script:wght@600;700&family=Inter:ital,opsz,wght@0,14..32,300..800;1,14..32,300..800&family=JetBrains+Mono:ital,wght@0,400..800;1,400..800&family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&family=Space+Grotesk:wght@400..700&display=swap" rel="stylesheet"/>
+  
+  <!-- Iconoir Icons Library (https://iconoir.com) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/iconoir-icons/iconoir@main/css/iconoir.css"/>
+  
+  <!-- QRCode.js para generación dinámica de códigos QR -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+  <!-- SheetJS (xlsx) para importación y exportación nativa de Excel (.xlsx / .csv) -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        screens: {
+          'xs': '420px',
+          'sm': '640px',
+          'md': '768px',
+          'lg': '1024px',
+          'xl': '1280px',
+          '2xl': '1536px'
+        },
+        extend: {
+          colors: {
+            "surface": "#ffffff",
+            "surface-dim": "#f8fafc",
+            "surface-container-lowest": "#ffffff",
+            "surface-container-low": "#ffffff",
+            "surface-container": "#f1f5f9",
+            "surface-container-high": "#e2e8f0",
+            "surface-container-highest": "#cbd5e1",
+            "primary": "#2563eb",
+            "primary-container": "#1d4ed8",
+            "secondary": "#059669",
+            "secondary-container": "#d1fae5",
+            "tertiary": "#d97706",
+            "error": "#dc2626",
+            "on-surface": "#0f172a",
+            "on-surface-variant": "#475569",
+            "outline": "#94a3b8",
+            "outline-variant": "rgba(0,0,0,0.08)",
+            "border-subtle": "rgba(0,0,0,0.06)",
+            "emerald-gain": "#059669",
+            "emerald-gain-glow": "rgba(5, 150, 105, 0.12)"
+          },
+          fontFamily: {
+            sans: ['Plus Jakarta Sans', 'Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+            display: ['Plus Jakarta Sans', 'Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
+            tech: ['Space Grotesk', 'sans-serif']
+          }
+        }
+      }
+    };
+  </script>
+  <link rel="stylesheet" href="./styles.css"/>
+</head>
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans antialiased selection:bg-blue-600 selection:text-white min-h-screen flex flex-col justify-between transition-colors duration-200">
+
+  <!-- CONTENEDOR FLOTANTE DE NOTIFICACIONES TOAST (Cero ventanas bloqueantes del navegador) -->
+  <div id="toastContainer" class="fixed top-5 right-5 z-[100] flex flex-col gap-2 pointer-events-none max-w-sm w-full px-4 sm:px-0"></div>
+
+  <!-- MODAL DE DIÁLOGO / CONFIRMACIÓN MODERNA (Reemplazo de confirm() y prompt() nativos) -->
+  <div id="customDialogModal" class="fixed inset-0 z-[95] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-sm p-5 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-150">
+      <div class="flex items-start gap-3">
+        <div id="dialogIconBox" class="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 border border-blue-200 dark:border-blue-800">
+          <i id="dialogIcon" class="iconoir-info-circle text-[20px]"></i>
+        </div>
+        <div class="flex-1 min-w-0 pt-0.5">
+          <h4 id="dialogTitle" class="text-sm font-bold text-slate-900 dark:text-white">Notificación</h4>
+          <p id="dialogMessage" class="text-xs text-slate-600 dark:text-slate-400 mt-1 leading-relaxed font-sans"></p>
+        </div>
+      </div>
+      <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800" id="dialogButtonsContainer">
+        <button id="dialogBtnCancel" type="button" class="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold transition-all">
+          Cancelar
+        </button>
+        <button id="dialogBtnConfirm" type="button" class="px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-sm">
+          Aceptar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOP APP BAR (Luminoso o Slate Nocturno con Jerarquía Limpia) -->
+  <header class="sticky top-0 z-40 w-full bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-b border-slate-200/90 dark:border-slate-800 shadow-sm transition-all">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2 sm:gap-4">
+      
+      <!-- 1. Marca & Identidad (Izquierda) -->
+      <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+        <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-blue-600 dark:bg-blue-500 text-white flex items-center justify-center shadow-md shadow-blue-500/25 shrink-0 border border-blue-700/20">
+          <svg class="w-5 h-5 sm:w-6 sm:h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <path d="m9 12 2 2 4-4"/>
+          </svg>
+        </div>
+        <div class="flex flex-col">
+          <span class="font-extrabold text-lg sm:text-xl tracking-tight text-slate-900 dark:text-white leading-none">Smart<span class="text-blue-600 dark:text-blue-400">Quote</span></span>
+        </div>
+      </div>
+
+      <!-- 2. Navegación Principal (Centro) -->
+      <nav class="hidden lg:flex items-center gap-1 bg-slate-100/90 dark:bg-slate-800/80 p-1 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-sans">
+        <button id="navBtnCotizador" onclick="toggleClientPreviewMode(false)" class="px-3 py-1.5 rounded-lg font-semibold bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm flex items-center gap-1.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+          <span>Cotizador</span>
+        </button>
+        <button class="px-3 py-1.5 rounded-lg font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-700/60 transition-all" onclick="openHistoryModal()">
+          Mis Cotizaciones
+        </button>
+        <button class="px-3 py-1.5 rounded-lg font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-700/60 transition-all" onclick="toggleCompanyModal()">
+          Mis Datos / Logo
+        </button>
+        <button class="px-3 py-1.5 rounded-lg font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 hover:bg-blue-50/70 dark:hover:bg-blue-900/40 transition-all flex items-center gap-1.5" onclick="openFeedbackModal()" title="¿Qué podemos mejorar o qué te gustaría agregar?">
+          <i class="iconoir-chat-bubble-empty text-sm"></i>
+          <span>¿Ideas o Mejoras?</span>
+        </button>
+      </nav>
+
+      <!-- 3. Acciones Ordenadas por Jerarquía (Derecha) -->
+      <div class="flex items-center gap-1 sm:gap-2 shrink-0">
+        <!-- Acceso directo a Historial en Móvil -->
+        <button onclick="openHistoryModal()" class="lg:hidden flex items-center gap-1 p-2 sm:px-2.5 sm:py-2 rounded-xl text-xs font-semibold bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/60 dark:hover:bg-blue-900/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 transition-all shadow-sm" title="Ver cotizaciones anteriores y abonos">
+          <i class="iconoir-folder text-base sm:text-sm"></i>
+          <span class="text-[11px] hidden md:inline font-bold">Historial</span>
+        </button>
+
+        <!-- Selector Modo Oscuro / Claro (Discreto) -->
+        <button id="themeToggleBtn" onclick="toggleTheme()" class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center transition-all border border-slate-200 dark:border-slate-700" title="Cambiar tema">
+          <i id="themeToggleIcon" class="iconoir-half-moon text-sm sm:text-base"></i>
+        </button>
+
+        <!-- Guardar Cotización (Acción Secundaria) -->
+        <button id="btnGuardarCotizacion" class="flex items-center gap-1.5 p-2 sm:px-3 sm:py-2 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition-all shadow-sm" onclick="guardarCotizacionActual()" title="Guardar cambios">
+          <i class="iconoir-floppy-disk text-base sm:text-sm text-slate-500 dark:text-slate-400"></i>
+          <span class="hidden sm:inline">Guardar</span>
+        </button>
+
+        <!-- Previsualizar Cotización en PDF -->
+        <button class="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-2 rounded-xl text-xs font-black bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/70 dark:hover:bg-blue-900/70 text-blue-700 dark:text-blue-300 border-2 border-blue-200 dark:border-blue-800 transition-all shadow-sm" onclick="openSwissModal()" title="Previsualizar cómo queda tu cotización en PDF">
+          <i class="iconoir-eye text-base text-blue-600 dark:text-blue-400"></i>
+          <span class="hidden sm:inline">Previsualizar</span>
+          <span class="sm:hidden">Ver</span>
+        </button>
+
+        <!-- Acción Primaria Principal (Call To Action Destacado) -->
+        <button class="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-600/20 transition-all shrink-0" onclick="openPaymentGatewayModal()">
+          <i class="iconoir-download text-sm"></i>
+          <span class="hidden sm:inline">Descargar </span><span>PDF</span>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- MAIN WRAPPER -->
+  <main class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 flex-1 pb-24 sm:pb-8">
+
+    <!-- WORKSPACE DEL CONTRATISTA (MODO EDITOR) -->
+    <div id="contractorEditorWorkspace" class="space-y-6">
+
+    <!-- SUB-HEADER CON ESTADO Y ACCESOS RÁPIDOS -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200 dark:border-slate-800">
+      <div>
+        <div class="flex flex-wrap items-center gap-2 mb-1">
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 text-xs font-mono font-bold">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Sistema Listo
+          </span>
+          <span class="text-xs text-slate-600 dark:text-slate-400 font-mono font-bold" id="activeQuoteCodeBadge">Nueva Cotización (Sin guardar)</span>
+        </div>
+        <h1 class="text-2xl sm:text-3xl font-black text-slate-950 dark:text-white tracking-tight">Cotizador Profesional</h1>
+      </div>
+
+      <div class="flex items-center gap-2 shrink-0">
+        <button type="button" onclick="iniciarNuevaCotizacion()" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-bold border border-slate-300 dark:border-slate-600 flex items-center gap-1.5 transition-all shadow-sm" title="Limpiar y crear una cotización nueva">
+          <i class="iconoir-plus-circle text-base text-blue-600 dark:text-blue-400"></i>
+          <span>Nueva Cotización</span>
+        </button>
+        <button type="button" onclick="openHistoryModal()" class="px-3.5 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/60 dark:hover:bg-blue-900/60 text-blue-800 dark:text-blue-200 text-xs font-bold border border-blue-200 dark:border-blue-800 flex items-center gap-1.5 transition-all shadow-sm" title="Ver cotizaciones anteriores y registrar abonos">
+          <i class="iconoir-folder text-base text-blue-600 dark:text-blue-400"></i>
+          <span>Mis Cotizaciones</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- AI HIDDEN COSTS WARNING BANNER -->
+    <div id="alertasImprevistosContainer" class="hidden bg-amber-50 dark:bg-amber-950/40 border border-amber-200/90 dark:border-amber-800 rounded-2xl p-4 transition-all">
+      <div class="flex items-center gap-2 mb-2">
+        <i class="iconoir-warning-triangle text-amber-600 dark:text-amber-400 text-[18px]"></i>
+        <h3 class="text-xs font-bold uppercase tracking-wider text-amber-900 dark:text-amber-300">⚠️ Ojo: Gastos que podrías estar olvidando (para que no pierdas plata)</h3>
+        <span class="text-[10px] font-mono text-amber-800 dark:text-amber-200 bg-amber-100/70 dark:bg-amber-900/50 px-2 py-0.5 rounded border border-amber-200 dark:border-amber-700">Protege tu margen</span>
+      </div>
+      <ul id="alertasImprevistosList" class="space-y-1.5 pl-1">
+        <!-- Renderizado dinámico -->
+      </ul>
+    </div>
+
+    <!-- MAIN TWO-COLUMN WORKSPACE -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+      <!-- LEFT WORKSPACE: 4-STEP STREAMLINED FLOW -->
+      <div class="lg:col-span-7 xl:col-span-8 space-y-5">
+
+        <!-- BARRA HERO: DICTADO POR VOZ O TEXTO (DE WHATSAPP A WHATSAPP EN 60 SEGUNDOS) -->
+        <div class="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-emerald-50 via-blue-50 to-emerald-50 dark:from-slate-800 dark:via-slate-800/80 dark:to-slate-800 border-2 border-emerald-300 dark:border-emerald-700 shadow-sm space-y-2.5">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+            <span class="text-xs sm:text-sm font-black uppercase tracking-wide text-emerald-950 dark:text-emerald-300 flex items-center gap-2">
+              <i class="iconoir-microphone text-xl text-emerald-600 dark:text-emerald-400"></i>
+              <span>¿Quieres cotizar en 60 segundos? Toca el micro y habla:</span>
+            </span>
+            <span class="text-xs text-slate-600 dark:text-slate-400 font-semibold">Dicta como una nota de voz de WhatsApp</span>
+          </div>
+
+          <form class="relative flex items-center bg-white dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-600 rounded-2xl p-1.5 shadow-sm focus-within:border-emerald-600 focus-within:ring-2 focus-within:ring-emerald-500/20 transition-all gap-1.5 sm:gap-2" onsubmit="event.preventDefault(); parseNaturalText();">
+            <!-- Botón de Micrófono para Dictar por Voz -->
+            <button type="button" id="btnVoiceDictation" onclick="toggleVoiceDictation()" class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center shrink-0 transition-all shadow-md shadow-emerald-600/25" title="Toca y habla: dicta como un audio de WhatsApp">
+              <i class="iconoir-microphone text-xl sm:text-2xl text-white" id="voiceMicIcon"></i>
+            </button>
+            <input class="w-full min-w-0 bg-transparent border-0 text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100 placeholder-slate-500 focus:ring-0 focus:outline-none py-1.5 sm:py-2 px-1.5 sm:px-2 font-sans truncate" id="quickAiInput" placeholder='Toca el micro 🎙️ o escribe: "3 bultos de cemento, pintor..."' type="text"/>
+            <button id="btnDesglosarAi" class="px-3 sm:px-5 py-2.5 sm:py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs sm:text-sm font-black flex items-center justify-center gap-1.5 transition-all shadow-sm shrink-0 whitespace-nowrap" type="submit">
+              <i class="iconoir-sparks text-base"></i>
+              <span class="hidden sm:inline">Desglosar Gastos</span>
+              <span class="sm:hidden">Desglosar</span>
+            </button>
+          </form>
+        </div>
+
+        <!-- PASO 1: DATOS ESENCIALES & RUTA DE FLETE -->
+        <section class="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 shadow-sm transition-all hover:shadow">
+          <div class="flex items-center justify-between pb-3 mb-4 border-b border-slate-100 dark:border-slate-800">
+            <div class="flex items-center gap-2.5">
+              <span class="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-950 border-2 border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300 text-sm font-black font-mono flex items-center justify-center">1</span>
+              <h2 class="text-base font-extrabold uppercase tracking-wide text-slate-900 dark:text-slate-100">Paso 1: ¿A quién le cotizas y dónde es el trabajo?</h2>
+            </div>
+            <button class="text-xs sm:text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1.5 transition-colors font-bold" onclick="toggleCompanyModal()">
+              <i class="iconoir-badge-check text-lg"></i>
+              <span>Mis Datos y Logo</span>
+            </button>
+          </div>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="space-y-1.5">
+              <label class="text-xs sm:text-sm font-extrabold uppercase tracking-wide text-slate-800 dark:text-slate-200">¿A nombre de quién va la cotización? (Cliente o Empresa)</label>
+              <input class="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 rounded-xl px-3.5 py-2.5 text-sm sm:text-base font-bold text-slate-900 dark:text-white placeholder-slate-400 focus:bg-white dark:focus:bg-slate-800 focus:border-blue-600 focus:outline-none font-sans shadow-sm" id="clientNameInput" oninput="updateSwissPreview()" type="text" value="Constructora Los Andes S.A.S. - NIT 900.231.844-1" placeholder="Ej: Constructora Bolívar o Don Carlos Restrepo"/>
+            </div>
+            <div class="space-y-1.5">
+              <label class="text-xs sm:text-sm font-extrabold uppercase tracking-wide text-slate-800 dark:text-slate-200 flex items-center justify-between">
+                <span>WhatsApp del Cliente</span>
+                <span class="text-xs text-emerald-700 dark:text-emerald-400 font-extrabold">Para enviar directo 📲</span>
+              </label>
+              <div class="relative">
+                <i class="iconoir-chat-bubble-check absolute left-3 top-1/2 -translate-y-1/2 text-emerald-600 text-lg"></i>
+                <input class="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 rounded-xl text-sm sm:text-base font-bold text-slate-900 dark:text-white placeholder-slate-400 focus:bg-white dark:focus:bg-slate-800 focus:border-emerald-600 focus:outline-none font-sans font-mono shadow-sm" id="clientPhoneInput" placeholder="Ej. 310 456 7890" type="tel" inputmode="tel" value="310 456 7890"/>
+              </div>
+            </div>
+            <div class="space-y-1.5">
+              <label class="text-xs sm:text-sm font-extrabold uppercase tracking-wide text-slate-800 dark:text-slate-200">¿Qué trabajo vas a realizar? (Título del servicio)</label>
+              <input class="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 rounded-xl px-3.5 py-2.5 text-sm sm:text-base font-bold text-slate-900 dark:text-white placeholder-slate-400 focus:bg-white dark:focus:bg-slate-800 focus:border-blue-600 focus:outline-none font-sans shadow-sm" id="serviceNameInput" oninput="updateSwissPreview()" type="text" value="Remodelación Estructural, Redes Hidráulicas &amp; Acabados" placeholder="Ej: Remodelación de baño, pintura general o arreglo de tubería"/>
+            </div>
+            <div class="space-y-1.5">
+              <label class="text-xs sm:text-sm font-extrabold uppercase tracking-wide text-slate-800 dark:text-slate-200">¿Cuánto tiempo dura esta oferta?</label>
+              <select class="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 rounded-xl px-3.5 py-2.5 text-sm sm:text-base font-bold text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-800 focus:border-blue-600 focus:outline-none font-sans shadow-sm" id="offerValidity" onchange="updateSwissPreview()">
+                <option selected="" value="30 días calendario (Vía PSE / Transferencia Bancolombia-Davivienda)">30 días de validez</option>
+                <option value="15 días calendario (Vía PSE / Transferencia Bancolombia-Davivienda)">15 días de validez</option>
+                <option value="45 días calendario (Vía PSE / Transferencia Bancolombia-Davivienda)">45 días de validez</option>
+              </select>
+            </div>
+            <div class="space-y-1.5 md:col-span-2">
+              <div class="flex items-center justify-between">
+                <label class="text-xs sm:text-sm font-extrabold uppercase tracking-wide text-slate-800 dark:text-slate-200">Dirección o barrio donde harás el trabajo</label>
+                <div class="flex items-center gap-1.5">
+                  <span class="text-xs text-blue-700 dark:text-blue-300 font-mono font-bold bg-blue-100 dark:bg-blue-950 px-2 py-0.5 rounded">GPS en Vivo</span>
+                  <button type="button" onclick="toggleMapVisibility()" id="btnToggleMap" class="text-xs text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white font-bold underline">
+                    Ocultar Mapa
+                  </button>
+                </div>
+              </div>
+              <div class="relative flex items-center">
+                <i class="iconoir-map-pin absolute left-3.5 top-1/2 -translate-y-1/2 text-blue-600 dark:text-blue-400 text-lg"></i>
+                <input class="w-full pl-10 pr-24 py-2.5 bg-slate-50 dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 rounded-xl text-sm sm:text-base font-bold text-slate-900 dark:text-white placeholder-slate-400 focus:bg-white dark:focus:bg-slate-800 focus:border-blue-600 focus:outline-none font-sans shadow-sm" id="destAddressInput" onchange="calculateRouteFreight(true)" oninput="handleAddressInputDebounced()" onkeydown="if(event.key==='Enter'){event.preventDefault();calculateRouteFreight(true);}" type="text" value="Calle 127 # 19-35, Usaquén, Bogotá" placeholder="Ej: Calle 127 # 19-35, Usaquén, Bogotá"/>
+                <button type="button" onclick="calculateRouteFreight(true)" class="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold flex items-center gap-1 shadow-sm transition-all" title="Buscar y centrar en el mapa">
+                  <i class="iconoir-search text-sm"></i>
+                  <span>Buscar</span>
+                </button>
+              </div>
+
+              <!-- Punto de Partida (Taller o Bodega del Profesional) -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pb-1">
+                <div>
+                  <div class="flex items-center justify-between mb-1">
+                    <label class="text-xs font-bold uppercase tracking-wide text-slate-700 dark:text-slate-300">Punto de salida (Tu taller / bodega)</label>
+                    <button type="button" onclick="detectContractorLocation()" id="btnDetectGPS" class="text-xs text-blue-600 dark:text-blue-400 font-bold hover:underline flex items-center gap-1 transition-all" title="Detectar tu ubicación actual vía GPS en tu celular o computador">
+                      <i class="iconoir-pin text-xs"></i>
+                      <span id="btnDetectGPSText">Detectar mi GPS</span>
+                    </button>
+                  </div>
+                  <div class="relative flex items-center">
+                    <i class="iconoir-home-alt absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm"></i>
+                    <input class="w-full pl-8 pr-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-xl text-xs sm:text-sm font-bold text-slate-900 dark:text-white font-sans focus:outline-none focus:border-blue-500 shadow-sm" id="originAddressInput" onchange="onOriginAddressChanged()" oninput="handleOriginInputDebounced()" type="text" value="Carrera 68 # 45-20, Bogotá" placeholder="Tu dirección, taller o bodega"/>
+                  </div>
+                </div>
+                <div>
+                  <label class="text-xs font-bold uppercase tracking-wide text-slate-700 dark:text-slate-300">Tipo de zona / Acceso del trabajo</label>
+                  <select class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-xl px-3 py-2 text-xs sm:text-sm font-bold text-slate-900 dark:text-white font-sans focus:outline-none focus:border-blue-500 shadow-sm" id="zoneDifficultySelect" onchange="calculateRouteFreight(false)">
+                    <option value="urbano" selected="">Zona Urbana normal (Fácil acceso)</option>
+                    <option value="centro">Centro de ciudad / Zona de alto tráfico (+25%)</option>
+                    <option value="montana">Zona de montaña / Ladera o lomas (+35%)</option>
+                    <option value="rural">Rural / Veredal / Fuera de perímetro (+50%)</option>
+                    <option value="sin_parqueo">Zona peatonal / Sin parqueadero para carga (+20%)</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Sugerencias rápidas de ciudades y localidades en Colombia -->
+              <div class="flex items-center gap-2 pt-1 overflow-x-auto text-xs font-sans pb-1">
+                <span class="text-slate-600 dark:text-slate-400 font-extrabold shrink-0">Zonas rápidas:</span>
+                <button type="button" onclick="setQuickAddressAndOrigin('Carrera 68, Bogotá', 'Calle 127 # 19-35, Usaquén, Bogotá', 'urbano')" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold shrink-0 border border-slate-300 dark:border-slate-600 transition-all">Bogotá (Usaquén)</button>
+                <button type="button" onclick="setQuickAddressAndOrigin('Carrera 7, Bogotá', 'Plaza de Bolívar, La Candelaria, Bogotá', 'centro')" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold shrink-0 border border-slate-300 dark:border-slate-600 transition-all">Bogotá (Centro)</button>
+                <button type="button" onclick="setQuickAddressAndOrigin('Autopista Norte, Bogotá', 'Vía La Calera Km 4, La Calera', 'montana')" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold shrink-0 border border-slate-300 dark:border-slate-600 transition-all">La Calera (Montaña)</button>
+                <button type="button" onclick="setQuickAddressAndOrigin('Calle 80, Bogotá', 'Vereda Cerca de Piedra, Chía', 'rural')" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold shrink-0 border border-slate-300 dark:border-slate-600 transition-all">Chía / Cota (Sabana)</button>
+                <button type="button" onclick="setQuickAddressAndOrigin('San Diego, Medellín', 'Carrera 43A # 1-50, El Poblado, Medellín', 'urbano')" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold shrink-0 border border-slate-300 dark:border-slate-600 transition-all">Medellín (Poblado)</button>
+                <button type="button" onclick="setQuickAddressAndOrigin('Calle 5, Cali', 'Avenida 6N # 28N-40, Granada, Cali', 'urbano')" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold shrink-0 border border-slate-300 dark:border-slate-600 transition-all">Cali (Granada)</button>
+                <button type="button" onclick="setQuickAddressAndOrigin('Centro, Barranquilla', 'Carrera 54 # 72-140, Alto Prado, Barranquilla', 'urbano')" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold shrink-0 border border-slate-300 dark:border-slate-600 transition-all">Barranquilla (Prado)</button>
+              </div>
+
+              <!-- Visor de Mapa Interactivo Dinámico -->
+              <div id="interactiveMapWrapper" class="mt-2 rounded-xl border border-slate-200/90 dark:border-slate-700 overflow-hidden shadow-sm bg-slate-100 dark:bg-slate-800 transition-all">
+                <div class="px-3 py-1.5 bg-slate-50 dark:bg-slate-800/90 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between text-[11px] font-sans">
+                  <div class="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 truncate">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
+                    <span id="mapCurrentLocationLabel" class="truncate font-medium">Ubicación: Calle 127 # 19-35, Usaquén, Bogotá</span>
+                  </div>
+                  <div class="flex items-center gap-2 shrink-0">
+                    <button type="button" onclick="openFullMapExternal()" class="text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 font-medium" title="Abrir en Google Maps completo">
+                      <i class="iconoir-open-new-window text-xs"></i>
+                      <span>Abrir GPS</span>
+                    </button>
+                  </div>
+                </div>
+                <div id="mapIframeContainer" class="relative w-full h-44 sm:h-52 bg-slate-100 dark:bg-slate-900">
+                  <iframe id="googleMapIframe" class="w-full h-full border-0" loading="lazy" allowfullscreen referrerpolicy="no-referrer-when-downgrade" src="https://maps.google.com/maps?q=Calle%20127%20%23%2019-35%2C%20Usaqu%C3%A9n%2C%20Bogot%C3%A1&t=&z=15&ie=UTF8&iwloc=&output=embed"></iframe>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Micro bar: Flete Calculado en línea y Personalización Total -->
+          <div class="mt-3.5 pt-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/90 dark:bg-slate-800/70 rounded-2xl p-3 sm:p-4 border border-slate-200 dark:border-slate-700 space-y-3">
+            <!-- Fila superior: Resumen de Ruta y Kilómetros -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div class="flex items-start sm:items-center gap-2.5">
+                <div class="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-950/80 border border-blue-200 dark:border-blue-800 flex items-center justify-center shrink-0 text-blue-600 dark:text-blue-400 shadow-sm">
+                  <i class="iconoir-delivery-truck text-lg"></i>
+                </div>
+                <div>
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span class="text-xs sm:text-sm text-slate-900 dark:text-slate-100 font-bold" id="routeSummaryText">📍 Ruta: De Carrera 68 a Calle 127 • 14.2 km (~38 min)</span>
+                    <span id="routeGpsBadge" class="hidden text-[10px] bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 font-mono font-bold px-2 py-0.5 rounded-md border border-emerald-300 dark:border-emerald-700">GPS Activo</span>
+                  </div>
+                  <span class="text-xs text-slate-500 dark:text-slate-400 block" id="routeCostFormulaText">Sugerido por distancia: <strong class="text-emerald-700 dark:text-emerald-400 font-mono font-bold" id="suggestedFreightDisplay">$50.000 COP</strong> ($15.000 base + kilometraje)</span>
+                </div>
+              </div>
+
+              <!-- Indicador de estado del cobro -->
+              <div id="freightStatusPill" class="text-xs font-bold px-2.5 py-1 rounded-lg bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 shrink-0 self-start sm:self-auto">
+                Cobrar sugerido por Km
+              </div>
+            </div>
+
+            <!-- Fila inferior: Control de Valor (A tu gusto, Gratis o Sugerido) -->
+            <div class="pt-2 border-t border-slate-200/80 dark:border-slate-700/80 flex flex-col md:flex-row md:items-center justify-between gap-3">
+              <div class="flex items-center gap-2 flex-wrap">
+                <label for="freightUserCostInput" class="text-xs font-bold text-slate-700 dark:text-slate-300 whitespace-nowrap">
+                  Valor a cobrar:
+                </label>
+                <!-- Input editable para poner el valor al gusto -->
+                <div class="flex items-center bg-white dark:bg-slate-900 px-2.5 py-1.5 rounded-xl border-2 border-slate-300 dark:border-slate-600 focus-within:border-blue-500 shadow-sm">
+                  <span class="text-xs font-extrabold text-slate-500 font-mono mr-1">$</span>
+                  <input type="number" id="freightUserCostInput" step="1000" min="0" value="50000" oninput="onCustomFreightInputChanged()" class="w-24 sm:w-28 text-sm font-black font-mono text-emerald-700 dark:text-emerald-400 bg-transparent focus:outline-none"/>
+                  <span class="text-[11px] font-bold text-slate-400 font-mono ml-1">COP</span>
+                </div>
+
+                <!-- Botón: Gratis / No cobrar -->
+                <button type="button" onclick="setFreightZero()" class="px-2.5 py-1.5 rounded-xl bg-white hover:bg-slate-100 dark:bg-slate-900 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold border border-slate-300 dark:border-slate-600 transition-all flex items-center gap-1 shadow-sm" title="No cobrar transporte al cliente (incluido o cortesía)">
+                  <i class="iconoir-cancel text-sm text-red-500"></i>
+                  <span>No cobrar ($0)</span>
+                </button>
+
+                <!-- Botón: Usar sugerido por Km -->
+                <button type="button" onclick="resetFreightToSuggested()" id="btnResetSuggestedFreight" class="px-2.5 py-1.5 rounded-xl bg-white hover:bg-slate-100 dark:bg-slate-900 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold border border-slate-300 dark:border-slate-600 transition-all flex items-center gap-1 shadow-sm" title="Restaurar costo sugerido según los kilómetros calculados">
+                  <i class="iconoir-refresh text-sm text-blue-500"></i>
+                  <span id="btnResetSuggestedText">Sugerido por Km</span>
+                </button>
+              </div>
+
+              <!-- Botón principal de agregar o actualizar en la lista de gastos -->
+              <button id="btnApplyFreight" class="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 transition-all shadow-sm shrink-0" onclick="applyFreightToBudget()" type="button">
+                <i class="iconoir-plus text-[16px]" id="btnApplyFreightIcon"></i>
+                <span id="btnApplyFreightText">Agregar a Gastos</span>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- PASO 2: MATERIALES Y MANO DE OBRA -->
+        <section class="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 shadow-sm transition-all hover:shadow">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 mb-4 border-b border-slate-100 dark:border-slate-800">
+            <div class="flex items-center gap-2.5">
+              <span class="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-950 border-2 border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300 text-sm font-black font-mono flex items-center justify-center">2</span>
+              <div>
+                <h2 class="text-base font-extrabold uppercase tracking-wide text-slate-900 dark:text-slate-100">Paso 2: Tus gastos (Materiales y Mano de obra)</h2>
+                <span class="text-xs font-bold text-slate-600 dark:text-slate-300 font-mono" id="itemsCountBadge">3 elementos en la lista</span>
+              </div>
+            </div>
+            
+            <div class="flex items-center gap-2">
+              <button type="button" onclick="openSyncModal()" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-900 dark:text-white border-2 border-slate-300 dark:border-slate-600 text-xs sm:text-sm font-bold flex items-center gap-2 transition-all shadow-sm" title="Importar precios desde Excel, Google Sheets o catálogo colombiano">
+                <i class="iconoir-table text-emerald-600 dark:text-emerald-400 text-lg"></i>
+                <span>Traer Precios</span>
+                <span class="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700">Excel / Ferretería</span>
+              </button>
+              <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" class="hidden" onchange="handleExcelUpload(event)"/>
+            </div>
+          </div>
+
+          <!-- BOTONES RÁPIDOS POR OFICIO EN 1 CLIC (PLANTILLAS AUTOMÁTICAS DEL NICHO) -->
+          <div class="mb-4 p-2.5 rounded-2xl bg-slate-100/90 dark:bg-slate-800/80 border-2 border-slate-200 dark:border-slate-700 flex items-center gap-2 overflow-x-auto text-xs sm:text-sm font-sans">
+            <span class="text-xs uppercase font-black text-slate-700 dark:text-slate-300 font-mono shrink-0 pl-1">Plantilla rápida:</span>
+            <button type="button" onclick="cargarPlantillaRapidaOficio('remodelacion')" class="px-3 py-1.5 bg-white dark:bg-slate-900 hover:bg-amber-50 dark:hover:bg-amber-950/50 text-slate-800 dark:text-slate-100 hover:text-amber-700 border-2 border-slate-300 dark:border-slate-600 hover:border-amber-400 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 shadow-sm" title="Plantilla para Obra blanca, Drywall, Mampostería y Acabados">
+              <span>🧱 Obra / Drywall</span>
+            </button>
+            <button type="button" onclick="cargarPlantillaRapidaOficio('plomeria')" class="px-3 py-1.5 bg-white dark:bg-slate-900 hover:bg-cyan-50 dark:hover:bg-cyan-950/50 text-slate-800 dark:text-slate-100 hover:text-cyan-700 border-2 border-slate-300 dark:border-slate-600 hover:border-cyan-400 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 shadow-sm" title="Plantilla para Plomería, Redes hidráulicas, Fugas y Griferías">
+              <span>🚰 Plomería / Tubos</span>
+            </button>
+            <button type="button" onclick="cargarPlantillaRapidaOficio('electricidad')" class="px-3 py-1.5 bg-white dark:bg-slate-900 hover:bg-yellow-50 dark:hover:bg-yellow-950/50 text-slate-800 dark:text-slate-100 hover:text-yellow-700 border-2 border-slate-300 dark:border-slate-600 hover:border-yellow-400 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 shadow-sm" title="Plantilla para Electricidad, Breakers, Cableado e Iluminación">
+              <span>⚡ Electricidad / LED</span>
+            </button>
+            <button type="button" onclick="cargarPlantillaRapidaOficio('pintura')" class="px-3 py-1.5 bg-white dark:bg-slate-900 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 text-slate-800 dark:text-slate-100 hover:text-indigo-700 border-2 border-slate-300 dark:border-slate-600 hover:border-indigo-400 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 shadow-sm" title="Plantilla para Pintura interior, Fachadas e Impermeabilización">
+              <span>🎨 Pintura / Fachada</span>
+            </button>
+            <button type="button" onclick="cargarPlantillaRapidaOficio('carpinteria')" class="px-3 py-1.5 bg-white dark:bg-slate-900 hover:bg-orange-50 dark:hover:bg-orange-950/50 text-slate-800 dark:text-slate-100 hover:text-orange-700 border-2 border-slate-300 dark:border-slate-600 hover:border-orange-400 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 shadow-sm" title="Plantilla para Cocinas integrales, Clósets y Carpintería RH">
+              <span>🪵 Carpintería / RH</span>
+            </button>
+            <button type="button" onclick="cargarPlantillaRapidaOficio('mantenimiento')" class="px-3 py-1.5 bg-white dark:bg-slate-900 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 text-slate-800 dark:text-slate-100 hover:text-emerald-700 border-2 border-slate-300 dark:border-slate-600 hover:border-emerald-400 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 shadow-sm" title="Plantilla para Aire acondicionado, Climatización y Mantenimiento técnico">
+              <span>❄️ Climatización / AA</span>
+            </button>
+            <button type="button" onclick="cargarPlantillaRapidaOficio('soldadura')" class="px-3 py-1.5 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 hover:text-slate-900 border-2 border-slate-300 dark:border-slate-600 hover:border-slate-400 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 shadow-sm" title="Plantilla para Cerrajería, Rejas, Portones y Estructuras metálicas">
+              <span>🛠️ Cerrajería / Soldadura</span>
+            </button>
+          </div>
+
+          <!-- Items Table -->
+          <div class="space-y-2.5 mb-4" id="itemsContainer">
+            <!-- Row 1: Materiales -->
+            <div class="item-row p-3 sm:p-3.5 rounded-2xl bg-white dark:bg-slate-800/90 border-2 border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 hover:border-blue-400 dark:hover:border-blue-500 transition-all shadow-sm">
+              <div class="flex items-center gap-3 flex-1 min-w-0">
+                <div class="w-10 h-10 rounded-xl text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-950/80 border-2 border-blue-200 dark:border-blue-800 flex items-center justify-center shrink-0 shadow-sm">
+                  <i class="iconoir-packages text-xl"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <input class="item-desc w-full bg-transparent text-sm sm:text-base font-bold text-slate-900 dark:text-white focus:outline-none focus:border-b-2 focus:border-blue-600 pb-0.5 truncate font-sans" oninput="updateSwissPreview()" type="text" value="Materiales principales y suministros"/>
+                  <span class="item-cat-label text-xs font-semibold text-slate-600 dark:text-slate-300 block truncate font-sans" data-category="Materiales">Materiales • Cemento, arena, varilla y pintura</span>
+                </div>
+              </div>
+              <div class="flex items-center justify-between sm:justify-end gap-2.5 shrink-0 pt-1 sm:pt-0 border-t sm:border-t-0 border-slate-100 dark:border-slate-700">
+                <div class="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-900 px-2.5 py-1.5 rounded-xl border border-slate-300 dark:border-slate-600 shadow-sm">
+                  <span class="text-xs font-extrabold text-slate-600 dark:text-slate-400 font-mono">Cant</span>
+                  <input class="item-qty w-12 bg-transparent text-center font-mono text-sm font-bold text-slate-900 dark:text-white focus:outline-none" min="0.1" step="any" oninput="recalculate()" inputmode="decimal" type="number" value="1"/>
+                </div>
+                <div class="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-600 shadow-sm">
+                  <span class="font-mono text-sm font-extrabold text-slate-500">$</span>
+                  <input class="item-cost w-24 sm:w-28 bg-transparent text-right font-mono text-sm sm:text-base font-bold text-slate-900 dark:text-white focus:outline-none font-semibold" oninput="recalculate()" step="1000" inputmode="numeric" type="number" value="450000"/>
+                </div>
+                <button class="w-9 h-9 rounded-xl flex items-center justify-center text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/50 transition-colors shrink-0" onclick="removeItem(this)" title="Eliminar ítem">
+                  <i class="iconoir-trash text-lg"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Row 2: Mano de Obra -->
+            <div class="item-row p-3 sm:p-3.5 rounded-2xl bg-white dark:bg-slate-800/90 border-2 border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 hover:border-blue-400 dark:hover:border-blue-500 transition-all shadow-sm">
+              <div class="flex items-center gap-3 flex-1 min-w-0">
+                <div class="w-10 h-10 rounded-xl text-emerald-800 dark:text-emerald-200 bg-emerald-100 dark:bg-emerald-950/80 border-2 border-emerald-200 dark:border-emerald-800 flex items-center justify-center shrink-0 shadow-sm">
+                  <i class="iconoir-wrench text-xl"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <input class="item-desc w-full bg-transparent text-sm sm:text-base font-bold text-slate-900 dark:text-white focus:outline-none focus:border-b-2 focus:border-blue-600 pb-0.5 truncate font-sans" oninput="updateSwissPreview()" type="text" value="Mano de obra calificada / oficiales"/>
+                  <span class="item-cat-label text-xs font-semibold text-slate-600 dark:text-slate-300 block truncate font-sans" data-category="Mano de obra">Mano de obra • Oficiales y ayudantes con ARL</span>
+                </div>
+              </div>
+              <div class="flex items-center justify-between sm:justify-end gap-2.5 shrink-0 pt-1 sm:pt-0 border-t sm:border-t-0 border-slate-100 dark:border-slate-700">
+                <div class="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-900 px-2.5 py-1.5 rounded-xl border border-slate-300 dark:border-slate-600 shadow-sm">
+                  <span class="text-xs font-extrabold text-slate-600 dark:text-slate-400 font-mono">Cant</span>
+                  <input class="item-qty w-12 bg-transparent text-center font-mono text-sm font-bold text-slate-900 dark:text-white focus:outline-none" min="0.1" step="any" oninput="recalculate()" inputmode="decimal" type="number" value="1"/>
+                </div>
+                <div class="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-600 shadow-sm">
+                  <span class="font-mono text-sm font-extrabold text-slate-500">$</span>
+                  <input class="item-cost w-24 sm:w-28 bg-transparent text-right font-mono text-sm sm:text-base font-bold text-slate-900 dark:text-white focus:outline-none font-semibold" oninput="recalculate()" step="1000" inputmode="numeric" type="number" value="320000"/>
+                </div>
+                <button class="w-9 h-9 rounded-xl flex items-center justify-center text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/50 transition-colors shrink-0" onclick="removeItem(this)" title="Eliminar ítem">
+                  <i class="iconoir-trash text-lg"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Row 3: Servicios / Flete -->
+            <div class="item-row p-3 sm:p-3.5 rounded-2xl bg-white dark:bg-slate-800/90 border-2 border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 hover:border-blue-400 dark:hover:border-blue-500 transition-all shadow-sm">
+              <div class="flex items-center gap-3 flex-1 min-w-0">
+                <div class="w-10 h-10 rounded-xl text-amber-800 dark:text-amber-200 bg-amber-100 dark:bg-amber-950/80 border-2 border-amber-200 dark:border-amber-800 flex items-center justify-center shrink-0 shadow-sm">
+                  <i class="iconoir-delivery-truck text-xl"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <input class="item-desc w-full bg-transparent text-sm sm:text-base font-bold text-slate-900 dark:text-white focus:outline-none focus:border-b-2 focus:border-blue-600 pb-0.5 truncate font-sans" oninput="updateSwissPreview()" type="text" value="Transporte, acarreos y flete urbano"/>
+                  <span class="item-cat-label text-xs font-semibold text-slate-600 dark:text-slate-300 block truncate font-sans" data-category="Servicios">Servicios • Fletes y transporte de materiales</span>
+                </div>
+              </div>
+              <div class="flex items-center justify-between sm:justify-end gap-2.5 shrink-0 pt-1 sm:pt-0 border-t sm:border-t-0 border-slate-100 dark:border-slate-700">
+                <div class="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-900 px-2.5 py-1.5 rounded-xl border border-slate-300 dark:border-slate-600 shadow-sm">
+                  <span class="text-xs font-extrabold text-slate-600 dark:text-slate-400 font-mono">Cant</span>
+                  <input class="item-qty w-12 bg-transparent text-center font-mono text-sm font-bold text-slate-900 dark:text-white focus:outline-none" min="0.1" step="any" oninput="recalculate()" inputmode="decimal" type="number" value="1"/>
+                </div>
+                <div class="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-600 shadow-sm">
+                  <span class="font-mono text-sm font-extrabold text-slate-500">$</span>
+                  <input class="item-cost w-24 sm:w-28 bg-transparent text-right font-mono text-sm sm:text-base font-bold text-slate-900 dark:text-white focus:outline-none font-semibold" oninput="recalculate()" step="1000" inputmode="numeric" type="number" value="80000"/>
+                </div>
+                <button class="w-9 h-9 rounded-xl flex items-center justify-center text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/50 transition-colors shrink-0" onclick="removeItem(this)" title="Eliminar ítem">
+                  <i class="iconoir-trash text-lg"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Add Item Button -->
+          <button class="w-full py-3.5 rounded-2xl bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/60 dark:hover:bg-blue-900/60 text-blue-700 dark:text-blue-300 border-2 border-dashed border-blue-300 dark:border-blue-700 text-sm sm:text-base font-black flex items-center justify-center gap-2.5 transition-all font-sans shadow-sm" onclick="addNewItem()" type="button">
+            <i class="iconoir-plus-circle text-xl"></i>
+            <span>Agregar otro material o gasto</span>
+          </button>
+        </section>
+
+        <!-- PASO 3: TU GANANCIA & PROTECCIÓN FINANCIERA -->
+        <section class="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 shadow-sm transition-all hover:shadow">
+          <div class="flex items-center justify-between pb-3 mb-4 border-b border-slate-100 dark:border-slate-800">
+            <div class="flex items-center gap-2.5">
+              <span class="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-950 border-2 border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300 text-sm font-black font-mono flex items-center justify-center">3</span>
+              <h2 class="text-base font-extrabold uppercase tracking-wide text-slate-900 dark:text-slate-100">Paso 3: Tu Margen y Protección Financiera</h2>
+            </div>
+            <span class="text-xs font-mono text-emerald-800 dark:text-emerald-300 font-bold bg-emerald-100 dark:bg-emerald-950/80 px-2.5 py-1 rounded-lg border border-emerald-300 dark:border-emerald-700">Tranquilidad Financiera</span>
+          </div>
+          
+          <div class="space-y-4">
+            <!-- 1. SLIDER DE GANANCIA (% MARGEN) -->
+            <div class="p-4 sm:p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border-2 border-slate-200 dark:border-slate-700 space-y-3">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <i class="iconoir-control-slider text-blue-600 dark:text-blue-400 text-xl"></i>
+                  <span class="text-xs sm:text-sm font-black uppercase tracking-wide text-slate-900 dark:text-slate-100">¿Qué porcentaje de margen o utilidad deseas?</span>
+                </div>
+                <span class="text-2xl sm:text-3xl font-black font-mono text-emerald-700 dark:text-emerald-400" id="marginPercentDisplay">35%</span>
+              </div>
+
+              <div class="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border-2 border-emerald-300 dark:border-emerald-700 text-emerald-900 dark:text-emerald-200 flex items-center gap-2.5 transition-colors" id="marginStatusBanner">
+                <i class="iconoir-check-circle text-xl text-emerald-600 dark:text-emerald-400" id="marginStatusIcon"></i>
+                <span class="text-xs sm:text-sm font-bold" id="marginStatusText">Margen seguro: cubres costos y aseguras rentabilidad</span>
+              </div>
+
+              <div class="space-y-2">
+                <input class="w-full h-2.5 rounded-lg bg-slate-200 dark:bg-slate-700 appearance-none cursor-pointer accent-emerald-600 dark:accent-emerald-400" id="marginRange" max="65" min="0" oninput="onMarginChange(this.value)" step="1" type="range" value="35"/>
+                <div class="flex justify-between text-xs font-mono font-bold text-slate-600 dark:text-slate-400">
+                  <span>0% (Solo costos)</span>
+                  <span class="text-emerald-700 dark:text-emerald-400 font-extrabold">35% (Recomendado)</span>
+                  <span>65% (Especialista)</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 2. COLCHÓN DE IMPREVISTOS Y RÉGIMEN FISCAL (2 Columnas) -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <!-- Colchón Selector -->
+              <div class="space-y-2 bg-slate-50 dark:bg-slate-800/80 p-4 rounded-2xl border-2 border-slate-200 dark:border-slate-700">
+                <div class="flex items-center justify-between">
+                  <span class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <i class="iconoir-shield text-amber-600 dark:text-amber-400 text-lg"></i>
+                    <span>Colchón para Imprevistos</span>
+                  </span>
+                  <span class="text-xs font-mono text-amber-900 dark:text-amber-200 font-black bg-amber-100 dark:bg-amber-950 px-2.5 py-1 rounded-lg border border-amber-300 dark:border-amber-700" id="badgeContingencyVal">5% Activo</span>
+                </div>
+                <p class="text-xs text-slate-600 dark:text-slate-300 font-medium">Guarda un porcentaje extra por si suben los materiales o el trabajo toma más tiempo.</p>
+                <div class="grid grid-cols-3 gap-2 pt-1" id="contingencySelector">
+                  <button class="contingency-btn py-2.5 rounded-xl bg-blue-600 text-white font-mono text-sm font-black transition-all shadow-sm" data-val="5" onclick="setContingency(5)" type="button">
+                    5% <span class="block text-xs font-bold opacity-90">Básico</span>
+                  </button>
+                  <button class="contingency-btn py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-mono text-sm font-black hover:bg-slate-200 dark:hover:bg-slate-700 border-2 border-slate-300 dark:border-slate-600 transition-all" data-val="10" onclick="setContingency(10)" type="button">
+                    10% <span class="block text-xs font-bold opacity-90">Recomendado</span>
+                  </button>
+                  <button class="contingency-btn py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-mono text-sm font-black hover:bg-slate-200 dark:hover:bg-slate-700 border-2 border-slate-300 dark:border-slate-600 transition-all" data-val="15" onclick="setContingency(15)" type="button">
+                    15% <span class="block text-xs font-bold opacity-90">Máximo</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Régimen Tributario Dropdown -->
+              <div class="space-y-2 bg-slate-50 dark:bg-slate-800/80 p-4 rounded-2xl border-2 border-slate-200 dark:border-slate-700 flex flex-col justify-between">
+                <div>
+                  <span class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-1.5">
+                    <i class="iconoir-check-circle text-emerald-600 dark:text-emerald-400 text-lg"></i>
+                    <span>Impuestos (¿Cobras con IVA o sin IVA?)</span>
+                  </span>
+                  <select class="w-full bg-white dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-600 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 focus:border-blue-600 focus:outline-none mb-2 font-sans shadow-sm" id="taxRegimeSelect">
+                    <option selected="" value="simple">Cuenta de cobro (Sin IVA / Régimen Simple)</option>
+                    <option value="responsable">Empresa con IVA del 19% (Responsable de IVA)</option>
+                    <option value="no_responsable">Persona Natural (Sin IVA)</option>
+                  </select>
+                </div>
+                <div class="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300 pt-1 border-t border-slate-200 dark:border-slate-700">
+                  <span>Retenciones locales:</span>
+                  <span class="text-emerald-700 dark:text-emerald-400 font-extrabold">Incluido automáticamente</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- PASO 4: FORMA DE COBRO, FIRMA Y FECHAS DE ENTREGA -->
+        <section class="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 shadow-sm transition-all hover:shadow">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 mb-4 border-b border-slate-100 dark:border-slate-800">
+            <div class="flex items-center gap-2.5">
+              <span class="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-950 border-2 border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300 text-sm font-black font-mono flex items-center justify-center">4</span>
+              <h2 class="text-base font-extrabold uppercase tracking-wide text-slate-900 dark:text-slate-100">Paso 4: Cobro del anticipo, firma y fechas de entrega</h2>
+            </div>
+            
+            <div class="flex items-center bg-slate-100 dark:bg-slate-800 p-1.5 rounded-2xl border-2 border-slate-200 dark:border-slate-700">
+              <button class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm border border-slate-200 dark:border-slate-700 transition-all flex items-center gap-2 font-sans" id="tabBtn-anticipo" onclick="switchTabConnect('anticipo')">
+                <i class="iconoir-qr-code text-base text-emerald-600 dark:text-emerald-400"></i>
+                <span>Cobro 50%</span>
+              </button>
+              <button class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-all flex items-center gap-2 font-sans" id="tabBtn-firma" onclick="switchTabConnect('firma')">
+                <i class="iconoir-edit-pencil text-base text-slate-500"></i>
+                <span>Firma en Pantalla</span>
+              </button>
+              <button class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-all flex items-center gap-2 font-sans" id="tabBtn-calendario" onclick="switchTabConnect('calendario')">
+                <i class="iconoir-calendar text-base text-slate-500"></i>
+                <span>Fechas de Entrega</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- TAB CONTENT 1: COBRO DE ANTICIPO 50% (CON BRE-B, NEQUI, DAVIPLATA O PSE) -->
+          <div class="space-y-3" id="tabContent-anticipo">
+            <div class="p-4 sm:p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border-2 border-slate-200 dark:border-slate-700 space-y-4">
+              
+              <!-- Fila 1: Resumen de Anticipo y QR -->
+              <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-3 border-b border-slate-200 dark:border-slate-700">
+                <div class="flex items-center gap-4">
+                  <!-- QR Container generado o subido -->
+                  <div class="relative group shrink-0">
+                    <div id="qrCodeDynamicContainer" class="w-16 h-16 sm:w-20 sm:h-20 bg-white p-1 rounded-xl shadow border-2 border-slate-200 dark:border-slate-700 flex items-center justify-center overflow-hidden">
+                      <img id="customBreBQrPreviewImg" class="w-full h-full object-contain hidden" alt="QR Bre-B"/>
+                    </div>
+                    <button type="button" onclick="document.getElementById('uploadBreBQrInput').click()" class="absolute -bottom-1.5 -right-1.5 p-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow text-xs flex items-center gap-1 font-sans" title="Subir foto de tu QR">
+                      <i class="iconoir-camera text-sm"></i>
+                    </button>
+                    <input type="file" id="uploadBreBQrInput" accept="image/*" class="hidden" onchange="handleCustomBreBQrUpload(event)"/>
+                  </div>
+
+                  <div class="space-y-1">
+                    <div class="flex items-center gap-2">
+                      <span class="text-xs uppercase tracking-wider text-emerald-800 dark:text-emerald-300 font-black font-mono bg-emerald-100 dark:bg-emerald-950 px-2 py-0.5 rounded-lg border border-emerald-300 dark:border-emerald-700">Anticipo 50%</span>
+                      <span id="brebBadgeTag" class="text-xs font-black text-blue-800 dark:text-blue-200 bg-blue-100 dark:bg-blue-950 px-2 py-0.5 rounded-lg border border-blue-300 dark:border-blue-700 flex items-center gap-1">
+                        <i class="iconoir-qr-code text-sm"></i> Bre-B
+                      </span>
+                    </div>
+                    <div class="text-2xl sm:text-3xl font-black text-slate-950 dark:text-white font-mono" id="qrAdvanceAmountBadge">$686.538 COP</div>
+                    <span class="text-xs sm:text-sm text-slate-700 dark:text-slate-300 block font-mono font-bold" id="qrChannelSubtitle">Llave Bre-B: 310 456 7890</span>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-2 w-full sm:w-auto">
+                  <button type="button" onclick="document.getElementById('uploadBreBQrInput').click()" class="w-full sm:w-auto px-4 py-2.5 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 text-slate-800 dark:text-slate-200 text-xs sm:text-sm font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-sm font-sans">
+                    <i class="iconoir-upload text-base text-blue-600 dark:text-blue-400"></i>
+                    <span>Subir foto de mi QR</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Fila 2: Configuración del canal y número de cobro -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-end">
+                <div>
+                  <label class="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 block mb-1">Medio para recibir el pago</label>
+                  <select class="w-full bg-white dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white text-xs sm:text-sm font-bold rounded-xl px-3 py-2.5 focus:outline-none font-sans shadow-sm" id="payoutChannelSelect" onchange="updatePaymentChannel()">
+                    <option value="nequi" selected="">Nequi o Daviplata (Bre-B / Celular)</option>
+                    <option value="bancolombia">Cuenta Bancolombia / Banco</option>
+                    <option value="efectivo">Efectivo contra entrega</option>
+                  </select>
+                </div>
+
+                <div id="payoutNumberFieldContainer">
+                  <label class="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 block mb-1" id="payoutNumberInputLabel">Tu Número de Nequi o Llave Bre-B</label>
+                  <input id="payoutNumberInput" oninput="updatePaymentChannel()" type="text" placeholder="Ej: 310 456 7890" value="310 456 7890" class="w-full bg-white dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white text-xs sm:text-sm font-bold rounded-xl px-3 py-2.5 font-mono focus:outline-none shadow-sm"/>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Botones de Enlace de Compartir Directo -->
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-1">
+              <p class="text-xs text-slate-600 dark:text-slate-300 font-medium text-center sm:text-left">
+                ✨ <strong>Bre-B / Red Interoperable:</strong> Tu cliente puede escanear y pagar desde cualquier app bancaria colombiana en segundos.
+              </p>
+              <button onclick="enviarPorWhatsApp()" class="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs sm:text-sm flex items-center justify-center gap-2 transition-all shadow-md shadow-emerald-600/20 font-sans shrink-0">
+                <i class="iconoir-chat-bubble-check text-lg"></i>
+                <span>Enviar Cobro por WhatsApp</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- TAB CONTENT 2: FIRMA DIGITAL TÁCTIL Y SENCILLA -->
+          <div class="hidden space-y-3" id="tabContent-firma">
+            <div class="p-4 sm:p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border-2 border-slate-200 dark:border-slate-700 space-y-4">
+              
+              <!-- Header Firma con WhatsApp y Copiar Link -->
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200 dark:border-slate-700">
+                <div>
+                  <span class="text-sm font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+                    <i class="iconoir-edit-pencil text-blue-600 dark:text-blue-400 text-lg"></i>
+                    <span>Firma de Aprobación del Cliente</span>
+                  </span>
+                  <p class="text-xs font-semibold text-slate-600 dark:text-slate-300 font-sans mt-0.5">El cliente puede firmar fácil en tu celular con el dedo, escribiendo su nombre o subiendo una foto.</p>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                  <button type="button" class="px-3.5 py-2 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border-2 border-slate-300 dark:border-slate-600 text-xs sm:text-sm font-bold flex items-center gap-2 transition-all shadow-sm font-sans" onclick="copyClientLink()">
+                    <i class="iconoir-copy text-base"></i>
+                    <span>Copiar Link para el Cliente</span>
+                  </button>
+                  <button type="button" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-black flex items-center gap-2 transition-all shadow-sm font-sans" onclick="enviarPorWhatsApp()">
+                    <i class="iconoir-chat-bubble-check text-base"></i>
+                    <span>Pedir Firma por WhatsApp</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Selector de Métodos de Firma: Dibujar / Escribir / Subir Imagen -->
+              <div class="flex flex-wrap items-center gap-2 bg-slate-200/90 dark:bg-slate-700/80 p-1.5 rounded-2xl text-xs sm:text-sm font-sans w-fit">
+                <button type="button" id="sigModeBtn-draw" onclick="setSignatureMode('draw')" class="px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-extrabold shadow-sm flex items-center gap-2 transition-all">
+                  <i class="iconoir-edit-pencil text-base text-blue-600 dark:text-blue-400"></i>
+                  <span>1. Dibujar con el Dedo</span>
+                </button>
+                <button type="button" id="sigModeBtn-type" onclick="setSignatureMode('type')" class="px-3.5 py-2 rounded-xl text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-bold flex items-center gap-2 transition-all">
+                  <i class="iconoir-text text-base"></i>
+                  <span>2. Escribir Nombre</span>
+                </button>
+                <button type="button" id="sigModeBtn-upload" onclick="setSignatureMode('upload')" class="px-3.5 py-2 rounded-xl text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-bold flex items-center gap-2 transition-all">
+                  <i class="iconoir-upload text-base"></i>
+                  <span>3. Subir Foto de la Firma</span>
+                </button>
+              </div>
+
+              <!-- 1. MODO DIBUJAR: CANVAS TÁCTIL INTERACTIVO -->
+              <div id="sigModeContainer-draw" class="space-y-3">
+                <div class="relative rounded-2xl bg-white border-2 border-dashed border-slate-400 dark:border-slate-500 overflow-hidden shadow-inner">
+                  <canvas id="signaturePadCanvas" class="w-full h-32 sm:h-36 touch-none cursor-crosshair block bg-white" style="touch-action: none;"></canvas>
+                  <div id="signaturePadPlaceholder" class="absolute inset-0 flex items-center justify-center pointer-events-none text-slate-600 text-xs sm:text-sm font-bold font-sans">
+                    <span class="flex items-center gap-2 bg-white/95 px-4 py-1.5 rounded-full shadow border border-slate-300">
+                      <i class="iconoir-edit text-lg text-blue-600"></i>
+                      <span>Dibuja aquí con el dedo o el mouse</span>
+                    </span>
+                  </div>
+                </div>
+
+                <div class="flex items-center justify-between text-xs sm:text-sm font-sans pt-1">
+                  <span class="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span id="signatureStatusBadge">Panel listo para firmar</span>
+                  </span>
+                  <div class="flex items-center gap-2.5">
+                    <button type="button" onclick="clearSignatureCanvas()" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold border border-slate-300 dark:border-slate-600 flex items-center gap-1.5 transition-all">
+                      <i class="iconoir-trash text-base"></i>
+                      <span>Borrar y repetir</span>
+                    </button>
+                    <button type="button" onclick="confirmCanvasSignature()" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black flex items-center gap-2 transition-all shadow-sm">
+                      <i class="iconoir-check text-base"></i>
+                      <span>Guardar Firma</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 2. MODO ESCRIBIR NOMBRE (CALIGRAFÍA ELEGANTE) -->
+              <div id="sigModeContainer-type" class="space-y-3 hidden">
+                <div class="flex items-center gap-2.5">
+                  <input type="text" id="typedSignatureInput" placeholder="Escribe el nombre o razón social del cliente..." oninput="updateTypedSignaturePreview()" class="w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-600 rounded-xl text-sm font-bold text-slate-900 dark:text-white font-sans focus:outline-none focus:border-blue-500"/>
+                  <button type="button" onclick="confirmTypedSignature()" class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-black rounded-xl transition-all shadow-sm whitespace-nowrap">
+                    Usar esta Firma
+                  </button>
+                </div>
+                <!-- Vista previa estilizada en cursiva -->
+                <div class="p-4 bg-white dark:bg-slate-950 rounded-2xl border-2 border-slate-200 dark:border-slate-700 text-center">
+                  <span class="text-xs uppercase font-extrabold tracking-wider text-slate-500 dark:text-slate-400 block mb-1">Así se verá en la cotización:</span>
+                  <div id="typedSignaturePreview" class="text-3xl text-slate-900 dark:text-white font-bold italic select-none" style="font-family: 'Caveat', 'Dancing Script', cursive;">
+                    Nombre del Cliente
+                  </div>
+                </div>
+              </div>
+
+              <!-- 3. MODO SUBIR IMAGEN DE FIRMA -->
+              <div id="sigModeContainer-upload" class="space-y-3 hidden">
+                <div class="p-5 rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-600 text-center bg-white dark:bg-slate-900 cursor-pointer hover:border-blue-500 transition-all" onclick="document.getElementById('sigImageFileInput').click()">
+                  <input type="file" id="sigImageFileInput" accept="image/*" class="hidden" onchange="handleSignatureImageUpload(event)"/>
+                  <i class="iconoir-upload text-3xl text-blue-600 dark:text-blue-400 mx-auto block mb-1.5"></i>
+                  <span class="text-sm font-bold text-slate-900 dark:text-white block">Sube una foto o imagen de la firma</span>
+                  <span class="text-xs text-slate-600 dark:text-slate-400">Foto tomada desde el celular, imagen PNG o JPG</span>
+                </div>
+              </div>
+
+              <!-- Tarjeta de Confirmación de Firma Actual -->
+              <div id="currentSignaturePreviewCard" class="hidden p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border-2 border-emerald-300 dark:border-emerald-800 flex items-center justify-between gap-3 text-xs sm:text-sm">
+                <div class="flex items-center gap-3">
+                  <div class="w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200 flex items-center justify-center font-bold">
+                    <i class="iconoir-check-circle text-lg"></i>
+                  </div>
+                  <div>
+                    <span class="font-extrabold text-emerald-900 dark:text-emerald-100 block">¡Firma agregada a la cotización!</span>
+                    <span class="text-xs text-emerald-800 dark:text-emerald-300" id="signatureTimestampLabel">Aparecerá en el pie de página del documento PDF</span>
+                  </div>
+                </div>
+                <div id="activeSignatureThumbnail" class="h-9 max-w-[140px] flex items-center justify-center"></div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- TAB CONTENT 3: CALENDARIO Y TIEMPOS DE ENTREGA -->
+          <div class="hidden space-y-3" id="tabContent-calendario">
+            <div class="p-4 sm:p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border-2 border-slate-200 dark:border-slate-700 space-y-4">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="text-xs sm:text-sm font-extrabold uppercase tracking-wide text-slate-800 dark:text-slate-200 block mb-1">¿Cuántos días hábiles dura el trabajo?</label>
+                  <select class="w-full bg-white dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white text-xs sm:text-sm font-bold rounded-xl px-3 py-2.5 font-sans shadow-sm" id="executionDaysSelect" onchange="updateCalendarMilestones()">
+                    <option value="3">3 días de trabajo</option>
+                    <option value="5">5 días de trabajo (1 semana)</option>
+                    <option selected="" value="8">8 días de trabajo</option>
+                    <option value="12">12 días de trabajo</option>
+                    <option value="20">20 días de trabajo (1 mes)</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="text-xs sm:text-sm font-extrabold uppercase tracking-wide text-slate-800 dark:text-slate-200 block mb-1">Fecha prometida de entrega</label>
+                  <input class="w-full bg-white dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white text-xs sm:text-sm font-bold rounded-xl px-3 py-2.5 font-sans shadow-sm" id="deliveryDateInput" onchange="updateCalendarMilestones()" type="date" value="2026-04-02"/>
+                </div>
+              </div>
+              <div class="space-y-2 pt-1 text-xs sm:text-sm font-mono">
+                <div class="flex justify-between p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 shadow-sm">
+                  <span class="text-slate-700 dark:text-slate-300 font-sans font-bold">1. Compra de materiales y arranque:</span>
+                  <span class="text-blue-700 dark:text-blue-400 font-extrabold font-mono text-sm" id="calMilestone1">Día 1</span>
+                </div>
+                <div class="flex justify-between p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 shadow-sm">
+                  <span class="text-slate-700 dark:text-slate-300 font-sans font-bold">2. Avance de obra e instalación:</span>
+                  <span class="text-amber-800 dark:text-amber-300 font-extrabold font-mono text-sm" id="calMilestone2">Día 3</span>
+                </div>
+                <div class="flex justify-between p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 shadow-sm">
+                  <span class="text-slate-700 dark:text-slate-300 font-sans font-bold">3. Entrega final y cobro del saldo:</span>
+                  <span class="text-emerald-800 dark:text-emerald-300 font-extrabold font-mono text-sm" id="calMilestone3">Día 8</span>
+                </div>
+              </div>
+              <button class="w-full py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-900 dark:text-white text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all font-sans border-2 border-slate-300 dark:border-slate-600 shadow-sm" onclick="syncWithGoogleCalendar()" type="button">
+                <i class="iconoir-calendar text-[16px] text-blue-600 dark:text-blue-400"></i>
+                <span>Agendar estas fechas en Google Calendar</span>
+              </button>
+            </div>
+          </div>
+        </section>
+
+      </div>
+
+      <!-- RIGHT COLUMN: STICKY RESUMEN DE GANANCIAS Y TOTALES -->
+      <div class="lg:col-span-5 xl:col-span-4 sticky top-20 space-y-4">
+        
+        <!-- TARJETA RESUMEN DE LA COTIZACIÓN -->
+        <div class="bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-3xl p-5 sm:p-6 shadow-xl relative overflow-hidden space-y-4">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
+              <span class="text-xs font-black font-mono tracking-wider text-slate-800 dark:text-slate-100 uppercase">Cálculo en Vivo (Pesos Colombianos)</span>
+            </div>
+            <span class="text-xs font-mono font-bold text-slate-500">Año 2026</span>
+          </div>
+
+          <!-- Cost breakdowns -->
+          <div class="space-y-2 text-xs sm:text-sm">
+            <div class="flex justify-between text-slate-700 dark:text-slate-300 font-medium">
+              <span>Lo que gastas en materiales y pagos:</span>
+              <span class="font-mono text-slate-950 dark:text-white font-extrabold text-sm sm:text-base" id="statBaseCost">$850.000</span>
+            </div>
+            <div class="flex justify-between text-slate-700 dark:text-slate-300 font-medium">
+              <span>Colchón para imprevistos (<span id="statContingencyPercent">5</span>%):</span>
+              <span class="font-mono text-amber-800 dark:text-amber-300 font-extrabold text-sm sm:text-base" id="statContingencyCost">$42.500</span>
+            </div>
+            <div class="flex justify-between text-slate-900 dark:text-white pt-1.5 border-t border-slate-200 dark:border-slate-800">
+              <span class="font-bold text-slate-950 dark:text-white">Costos directos antes de tu margen:</span>
+              <span class="font-mono font-black text-slate-950 dark:text-white text-sm sm:text-base" id="statSubtotalCost">$892.500</span>
+            </div>
+          </div>
+
+          <!-- HERO STAT: TU UTILIDAD NETA -->
+          <div class="p-4 sm:p-5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border-2 border-emerald-300 dark:border-emerald-700 space-y-1 relative overflow-hidden shadow-sm">
+            <div class="flex items-center justify-between">
+              <span class="text-xs uppercase font-black tracking-widest text-emerald-900 dark:text-emerald-200">Tu Utilidad Neta</span>
+              <div class="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-900/70 border-2 border-emerald-300 dark:border-emerald-600 flex items-center justify-center text-emerald-800 dark:text-emerald-200 shadow-sm">
+                <i class="iconoir-wallet text-lg font-bold"></i>
+              </div>
+            </div>
+            <div class="text-3xl sm:text-4xl font-black font-mono text-emerald-700 dark:text-emerald-400 tracking-tight" id="statNetProfit">+$480.577</div>
+            <p class="text-xs text-emerald-950 dark:text-emerald-200 font-bold font-sans">Dinero libre para tu bolsillo después de pagar todo.</p>
+          </div>
+
+          <!-- PRECIO TOTAL AL CLIENTE -->
+          <div class="space-y-1 pt-1">
+            <div class="flex justify-between items-center">
+              <span class="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-900 dark:text-slate-100">Total a Cobrar al Cliente</span>
+              <span class="text-xs font-bold text-slate-600 dark:text-slate-300">Precio final</span>
+            </div>
+            <div class="flex items-baseline justify-between">
+              <span class="text-3xl sm:text-4xl font-black font-mono text-slate-950 dark:text-white tracking-tight" id="statClientTotal">$1.373.077</span>
+              <span class="text-sm font-mono font-black text-slate-600 dark:text-slate-300">COP</span>
+            </div>
+          </div>
+
+          <!-- 50/50 Split Badges -->
+          <div class="grid grid-cols-2 gap-2 p-3 rounded-2xl bg-slate-100/90 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 text-center">
+            <div>
+              <span class="text-xs uppercase font-extrabold text-slate-700 dark:text-slate-300 block font-sans">Cobras para empezar (50%)</span>
+              <span class="text-sm sm:text-base font-black font-mono text-emerald-800 dark:text-emerald-300" id="sidebarAdvanceAmount">$686.538</span>
+            </div>
+            <div class="border-l-2 border-slate-200 dark:border-slate-700">
+              <span class="text-xs uppercase font-extrabold text-slate-700 dark:text-slate-300 block font-sans">Cobras al terminar (50%)</span>
+              <span class="text-sm sm:text-base font-black font-mono text-slate-950 dark:text-white" id="finalPaymentBadge">$686.538</span>
+            </div>
+          </div>
+
+          <!-- ACTIONS: JERARQUÍA OPTIMIZADA CON WHATSAPP DE #1 -->
+          <div class="space-y-2.5 pt-1">
+            <!-- 1. HERO ACCIÓN PRINCIPAL: WHATSAPP -->
+            <button onclick="enviarPorWhatsApp()" class="w-full py-4 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-base flex items-center justify-center gap-2.5 shadow-lg shadow-emerald-600/30 transition-all font-sans">
+              <i class="iconoir-chat-bubble-check text-2xl"></i>
+              <span>Enviar Cotización por WhatsApp</span>
+            </button>
+            
+            <!-- 2. ACCIÓN SECUNDARIA: PREVISUALIZAR PDF FORMAL -->
+            <button class="w-full py-3 px-4 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-900 dark:text-white border-2 border-slate-300 dark:border-slate-600 font-extrabold text-sm flex items-center justify-center gap-2 transition-all font-sans shadow-sm" onclick="openSwissModal()" type="button">
+              <i class="iconoir-eye text-lg text-blue-600 dark:text-blue-400"></i>
+              <span>Previsualizar Cotización en PDF</span>
+            </button>
+
+            <!-- 3. ACCIÓN DE ANTICIPO / BRE-B -->
+            <button id="btnCobrarAnticipoBanner" class="w-full py-2.5 px-4 rounded-xl bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/60 dark:hover:bg-blue-900/60 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800 font-bold text-xs flex items-center justify-center gap-2 transition-all font-sans" onclick="openPaymentGatewayModal()" type="button">
+              <i class="iconoir-qr-code text-base text-blue-600 dark:text-blue-400"></i>
+              <span>Pedir Anticipo del 50% ($686.538)</span>
+            </button>
+          </div>
+
+          <div class="text-center text-xs text-slate-600 dark:text-slate-400 font-bold flex items-center justify-center gap-1.5 font-sans pt-1">
+            <i class="iconoir-lock text-base"></i>
+            <span>Tus datos se guardan seguros automáticamente</span>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+    <!-- /contractorEditorWorkspace -->
+
+    <!-- PORTAL DE APROBACIÓN Y PAGO DEL CLIENTE (VISTA OFICIAL PARA EL CLIENTE FINAL) -->
+    <div id="clientApprovalPortal" class="hidden space-y-6">
+      
+      <!-- Banner de Navegación / Contexto -->
+      <div id="clientPortalModeBanner" class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div class="flex items-center gap-2.5">
+          <span class="w-3 h-3 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
+          <div>
+            <span class="text-xs font-bold uppercase tracking-wider block">Propuesta Técnica &amp; Económica Formal</span>
+            <span class="text-[11px] text-blue-100">Revisa el alcance, autoriza el inicio y realiza el anticipo seguro</span>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="toggleClientPreviewMode(false)" class="px-3 py-1.5 bg-white/20 hover:bg-white/30 text-white text-xs font-semibold rounded-xl transition-all border border-white/25 shadow-sm">
+            ← Volver a Modo Editor
+          </button>
+        </div>
+      </div>
+
+      <!-- Tarjeta Principal de la Propuesta -->
+      <div class="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+        
+        <!-- Header del Contratista -->
+        <div class="flex flex-col sm:flex-row justify-between items-start gap-4 pb-6 border-b border-slate-200 dark:border-slate-800">
+          <div class="flex items-center gap-4">
+            <div id="clientViewLogoContainer" class="w-14 h-14 rounded-2xl bg-slate-950 text-white flex items-center justify-center font-black text-xl border border-slate-800 overflow-hidden shrink-0 shadow-sm">
+              <img id="clientViewLogoImg" class="w-full h-full object-contain hidden bg-white p-1" alt="Logo"/>
+              <div id="clientViewDefaultLogoBadge" class="flex flex-col items-center justify-center">
+                <span class="text-emerald-400 text-base font-black">SQ</span>
+                <span class="text-[7px] tracking-widest font-mono text-slate-300">COLOMBIA</span>
+              </div>
+            </div>
+            <div>
+              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Propuesta emitida por:</span>
+              <h2 class="text-lg sm:text-xl font-black text-slate-900 dark:text-white" id="clientViewSignerName">Ing. Alejandro Morales P.</h2>
+              <span class="text-xs text-slate-500 dark:text-slate-400 font-mono" id="clientViewSignerDoc">NIT / CC: 901.458.712-3</span>
+            </div>
+          </div>
+          <div class="text-left sm:text-right">
+            <span class="text-xs font-mono font-bold px-2.5 py-1 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-lg border border-slate-200 dark:border-slate-700" id="clientViewQuoteCode">#COT-2026-001</span>
+            <span class="text-xs text-emerald-600 dark:text-emerald-400 font-bold block mt-1" id="clientViewStatusBadge">● Pendiente de Aprobación</span>
+          </div>
+        </div>
+
+        <!-- Metadatos de la Obra -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 text-xs font-sans">
+          <div>
+            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Trabajo a Realizar</span>
+            <span class="font-bold text-slate-900 dark:text-white mt-0.5 block" id="clientViewServiceName">Remodelación Estructural &amp; Redes</span>
+          </div>
+          <div>
+            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Lugar / Ubicación</span>
+            <span class="text-slate-700 dark:text-slate-300 mt-0.5 block truncate" id="clientViewAddress">Calle 127 # 19-35, Bogotá</span>
+          </div>
+          <div>
+            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Tiempo de Ejecución</span>
+            <span class="text-slate-700 dark:text-slate-300 mt-0.5 block font-mono font-bold" id="clientViewDeliveryDays">8 días de trabajo</span>
+          </div>
+        </div>
+
+        <!-- Tabla de Entregables e Ítems (Limpia, sin costos unitarios internos ni márgenes) -->
+        <div class="space-y-2">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Entregables y Trabajos Incluidos en la Propuesta</h3>
+          <div class="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-700">
+            <table class="w-full text-left text-xs font-sans">
+              <thead class="bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 uppercase text-[10px] font-mono border-b border-slate-200 dark:border-slate-700">
+                <tr>
+                  <th class="py-2.5 px-4 font-bold">Concepto / Entregable</th>
+                  <th class="py-2.5 px-3 text-center font-bold">Cantidad</th>
+                  <th class="py-2.5 px-4 text-right font-bold">Tipo</th>
+                </tr>
+              </thead>
+              <tbody id="clientViewTableBody" class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
+                <!-- Se llena dinámicamente -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Resumen Financiero y Esquema de Pago -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5 pt-4 border-t border-slate-200 dark:border-slate-800">
+          <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-center">
+            <span class="text-[10px] uppercase font-bold text-slate-400 block">Total Cotización</span>
+            <span class="text-xl sm:text-2xl font-black font-mono text-slate-900 dark:text-white mt-1 block" id="clientViewTotalDisplay">$1.373.077 COP</span>
+            <span class="text-[10px] text-slate-500">Mano de obra, materiales y transporte</span>
+          </div>
+
+          <div class="p-4 rounded-2xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-center">
+            <span class="text-[10px] uppercase font-bold text-blue-600 dark:text-blue-400 block">Anticipo Requerido (50%)</span>
+            <span class="text-xl sm:text-2xl font-black font-mono text-blue-700 dark:text-blue-300 mt-1 block" id="clientViewAdvanceDisplay">$686.538 COP</span>
+            <span class="text-[10px] text-blue-800 dark:text-blue-300">Para arranque y compra de insumos</span>
+          </div>
+
+          <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-center">
+            <span class="text-[10px] uppercase font-bold text-slate-400 block">Saldo Final (50%)</span>
+            <span class="text-xl sm:text-2xl font-black font-mono text-slate-700 dark:text-slate-300 mt-1 block" id="clientViewBalanceDisplay">$686.538 COP</span>
+            <span class="text-[10px] text-slate-500">Contra entrega y recibido a satisfacción</span>
+          </div>
+        </div>
+
+        <!-- MÓDULO DE APROBACIÓN INTERACTIVA (FIRMA + PAGO + WHATSAPP) -->
+        <div class="p-6 rounded-3xl bg-slate-50 dark:bg-slate-800/80 border-2 border-dashed border-blue-300 dark:border-blue-700 space-y-6">
+          <div class="text-center max-w-md mx-auto space-y-1">
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-100 dark:bg-blue-900/60 text-blue-900 dark:text-blue-200 text-xs font-bold font-sans">
+              <i class="iconoir-shield-check text-sm text-blue-600 dark:text-blue-400"></i>
+              <span>Paso Final: Aprobación y Arranque</span>
+            </span>
+            <h4 class="text-base font-bold text-slate-900 dark:text-white">¿Estás de acuerdo con la propuesta?</h4>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Firma en el recuadro para autorizar el trabajo y realiza el anticipo para apartar tu fecha en el calendario.</p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+            <!-- Bloque 1: Firma Digital del Cliente -->
+            <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                  <i class="iconoir-edit text-blue-600 dark:text-blue-400"></i>
+                  <span>Tu Firma Digital</span>
+                </span>
+                <button type="button" onclick="clearClientPortalSignature()" class="text-[11px] text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 underline">
+                  Limpiar trazo
+                </button>
+              </div>
+
+              <div class="relative w-full h-32 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-300 dark:border-slate-600 overflow-hidden cursor-crosshair">
+                <canvas id="clientPortalSignatureCanvas" class="w-full h-full block"></canvas>
+                <div id="clientPortalSignaturePlaceholder" class="absolute inset-0 flex items-center justify-center text-slate-400 dark:text-slate-500 pointer-events-none text-xs">
+                  <span>✍️ Dibuja tu firma aquí con el dedo o ratón</span>
+                </div>
+              </div>
+
+              <button type="button" onclick="confirmClientPortalSignature()" id="btnConfirmClientPortalSig" class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-sm transition-all flex items-center justify-center gap-2">
+                <i class="iconoir-check text-base"></i>
+                <span id="btnConfirmClientPortalSigText">Estampar mi Firma en la Propuesta</span>
+              </button>
+            </div>
+
+            <!-- Bloque 2: Pago del Anticipo Seguro (Pasarela Bre-B / Nequi / Bancolombia) -->
+            <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border-2 border-emerald-300 dark:border-emerald-700 space-y-3 text-center shadow-sm">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                  <i class="iconoir-shield-check text-emerald-600 dark:text-emerald-400 text-base"></i>
+                  <span>Anticipo Protegido (50%)</span>
+                </span>
+                <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700">Sello Antifraude</span>
+              </div>
+
+              <div class="py-1">
+                <div class="text-2xl font-black font-mono text-emerald-700 dark:text-emerald-400" id="clientViewAdvancePill">$686.538 COP</div>
+                <span class="text-[11px] text-slate-500 dark:text-slate-400">Para arranque y compra de materiales</span>
+              </div>
+
+              <div class="flex items-center justify-center py-1">
+                <div id="clientPortalQrContainer" class="w-28 h-28 bg-white p-1.5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-center overflow-hidden cursor-pointer" onclick="openSecureCheckoutModal()" title="Toca para ampliar el QR y pagar con seguridad">
+                  <img id="clientPortalCustomQrImg" class="w-full h-full object-contain hidden" alt="QR Bre-B"/>
+                </div>
+              </div>
+
+              <div class="space-y-2">
+                <span class="text-xs text-slate-700 dark:text-slate-300 font-mono block font-semibold" id="clientPortalPayoutInfoText">Llave Bre-B: 310 456 7890</span>
+                <button type="button" onclick="openSecureCheckoutModal()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs sm:text-sm font-black shadow-md shadow-emerald-600/20 transition-all flex items-center justify-center gap-2">
+                  <i class="iconoir-lock text-base"></i>
+                  <span>Pagar Anticipo en Pasarela Segura</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bloque 3: Notificar por WhatsApp al Contratista -->
+          <div class="pt-2 text-center">
+            <button type="button" onclick="notificarAprobacionPorWhatsApp()" class="w-full max-w-md mx-auto py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-xs sm:text-sm font-black shadow-md shadow-emerald-500/20 transition-all flex items-center justify-center gap-2">
+              <i class="iconoir-chat-bubble-check text-lg"></i>
+              <span>📲 Notificar Aprobación y Firma por WhatsApp al Maestro</span>
+            </button>
+            <span class="text-[11px] text-slate-500 dark:text-slate-400 block mt-1.5">Le llegará un mensaje confirmando tu firma para coordinar el arranque de obra.</span>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- MODAL: CENTRO DE SINCRONIZACIÓN E IMPORTACIÓN DE PRECIOS -->
+  <div class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 overflow-y-auto hidden" id="syncModal">
+    <div class="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-2xl shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col border border-slate-200 dark:border-slate-800">
+      
+      <!-- Top Bar -->
+      <div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-200 dark:border-emerald-800 shadow-sm">
+            <i class="iconoir-table text-[20px]"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white tracking-tight">Sincronización &amp; Importación de Precios</h3>
+            <span class="text-[11px] text-slate-500 dark:text-slate-400 font-sans">Conecta las herramientas que ya usas sin configuraciones complejas</span>
+          </div>
+        </div>
+        <button class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white" onclick="closeSyncModal()">
+          <i class="iconoir-xmark text-[18px]"></i>
+        </button>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <div class="p-2 bg-slate-100/80 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-700 flex items-center gap-1.5 overflow-x-auto text-xs font-sans">
+        <button id="syncTabBtn-excel" onclick="switchSyncTab('excel')" class="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-semibold shadow-sm flex items-center gap-1.5 transition-all">
+          <i class="iconoir-page text-emerald-600 dark:text-emerald-400 text-sm"></i>
+          <span>Excel (.xlsx / .csv)</span>
+        </button>
+        <button id="syncTabBtn-sheets" onclick="switchSyncTab('sheets')" class="px-3 py-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-800/60 font-medium flex items-center gap-1.5 transition-all">
+          <i class="iconoir-internet text-blue-600 dark:text-blue-400 text-sm"></i>
+          <span>Google Sheets</span>
+        </button>
+        <button id="syncTabBtn-catalogo" onclick="switchSyncTab('catalogo')" class="px-3 py-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-800/60 font-medium flex items-center gap-1.5 transition-all">
+          <i class="iconoir-shop text-amber-600 dark:text-amber-400 text-sm"></i>
+          <span>Trabajos Listos (Combos)</span>
+        </button>
+        <button id="syncTabBtn-whatsapp" onclick="switchSyncTab('whatsapp')" class="px-3 py-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-800/60 font-medium flex items-center gap-1.5 transition-all">
+          <i class="iconoir-chat-bubble text-emerald-600 dark:text-emerald-400 text-sm"></i>
+          <span>Pegar de WhatsApp</span>
+        </button>
+      </div>
+
+      <!-- Tab Content Area -->
+      <div class="p-5 overflow-y-auto space-y-4 flex-1 max-h-[65vh]">
+        
+        <!-- TAB 1: EXCEL & CSV -->
+        <div id="syncTabContent-excel" class="space-y-4">
+          <div class="p-4 rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-800/40 text-center hover:border-emerald-500 transition-all cursor-pointer" onclick="document.getElementById('excelFileInput').click()">
+            <div class="w-12 h-12 rounded-xl bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 flex items-center justify-center mx-auto mb-2 border border-emerald-200 dark:border-emerald-800">
+              <i class="iconoir-upload text-[24px]"></i>
+            </div>
+            <h4 class="text-sm font-bold text-slate-900 dark:text-white">Subir archivo de Excel o CSV</h4>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-md mx-auto">Arrastra tu lista de precios o haz clic para seleccionarla (.xlsx, .xls, .csv). El sistema mapeará automáticamente las columnas de descripción, cantidad y precio.</p>
+            <button type="button" class="mt-3 px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-all inline-flex items-center gap-1.5">
+              <i class="iconoir-folder text-sm"></i>
+              <span>Seleccionar Archivo</span>
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+            <button onclick="exportarCotizacionExcel()" type="button" class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center gap-3 transition-all text-left">
+              <div class="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 border border-blue-200 dark:border-blue-800">
+                <i class="iconoir-download text-base"></i>
+              </div>
+              <div>
+                <span class="text-xs font-bold text-slate-900 dark:text-white block">Exportar a Excel (.xlsx)</span>
+                <span class="text-[11px] text-slate-500 dark:text-slate-400">Descarga esta cotización completa</span>
+              </div>
+            </button>
+
+            <button onclick="descargarPlantillaExcel()" type="button" class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center gap-3 transition-all text-left">
+              <div class="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-200 dark:border-emerald-800">
+                <i class="iconoir-page text-base"></i>
+              </div>
+              <div>
+                <span class="text-xs font-bold text-slate-900 dark:text-white block">Descargar Plantilla Base</span>
+                <span class="text-[11px] text-slate-500 dark:text-slate-400">Formato listo para llenar en Excel</span>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <!-- TAB 2: GOOGLE SHEETS -->
+        <div id="syncTabContent-sheets" class="space-y-4 hidden">
+          <div class="p-3.5 rounded-xl bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 text-xs text-blue-900 dark:text-blue-200 space-y-1">
+            <span class="font-bold flex items-center gap-1.5">
+              <i class="iconoir-info-circle text-blue-600 dark:text-blue-400 text-base"></i>
+              <span>Sincronización Directa sin OAuth ni Google Cloud</span>
+            </span>
+            <p class="text-[11px] text-slate-600 dark:text-slate-300">Solo abre tu archivo de Google Sheets &gt; <strong>Compartir</strong> &gt; Selecciona <em>"Cualquier persona con el enlace puede ver"</em> y pega la URL a continuación:</p>
+          </div>
+
+          <div class="space-y-1.5">
+            <label class="text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">Enlace de tu Google Sheet</label>
+            <div class="relative">
+              <i class="iconoir-link absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+              <input type="url" id="googleSheetUrlInput" placeholder="https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit" class="w-full pl-8 pr-3 py-2 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-blue-500 font-sans"/>
+            </div>
+          </div>
+
+          <button type="button" onclick="sincronizarGoogleSheetsPublico()" class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold shadow-sm transition-all flex items-center justify-center gap-2">
+            <i class="iconoir-refresh-double text-base"></i>
+            <span>Importar Datos desde Google Sheets</span>
+          </button>
+        </div>
+
+        <!-- TAB 3: TRABAJOS LISTOS (COMBOS DE OBRA REALES) -->
+        <div id="syncTabContent-catalogo" class="space-y-3 hidden">
+          <p class="text-xs text-slate-600 dark:text-slate-400 font-sans">Selecciona el trabajo que te pidió el cliente para cargarlo completo (materiales + mano de obra + transporte) con 1 solo clic:</p>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex flex-col justify-between gap-2 hover:border-blue-300 dark:hover:border-blue-700 transition-colors">
+              <div>
+                <span class="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                  <i class="iconoir-tools text-blue-600 dark:text-blue-400"></i>
+                  <span>Remodelación de Baño Estándar</span>
+                </span>
+                <span class="text-[11px] text-slate-500 dark:text-slate-400 block mt-0.5">Demolición, tubería PVC, impermeabilizado, enchape 12m², jornales oficial + ayudante y flete.</span>
+              </div>
+              <button onclick="cargarCatalogoPrecios('remodelacion_bano')" class="px-2.5 py-1.5 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/60 dark:hover:bg-blue-900/60 border border-blue-200 dark:border-blue-800 rounded-lg text-xs font-bold text-blue-700 dark:text-blue-300 transition-all text-center">
+                + Cargar Trabajo Completo
+              </button>
+            </div>
+
+            <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex flex-col justify-between gap-2 hover:border-amber-300 dark:hover:border-amber-700 transition-colors">
+              <div>
+                <span class="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                  <i class="iconoir-brush text-amber-600 dark:text-amber-400"></i>
+                  <span>Pintura &amp; Resane de Inmueble</span>
+                </span>
+                <span class="text-[11px] text-slate-500 dark:text-slate-400 block mt-0.5">Vinilo Tipo 1 (2 cuñetes), estuco plástico, cintas/plásticos y 3 días de maestro pintor.</span>
+              </div>
+              <button onclick="cargarCatalogoPrecios('pintura_inmueble')" class="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/60 dark:hover:bg-amber-900/60 border border-amber-200 dark:border-amber-800 rounded-lg text-xs font-bold text-amber-700 dark:text-amber-300 transition-all text-center">
+                + Cargar Trabajo Completo
+              </button>
+            </div>
+
+            <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex flex-col justify-between gap-2 hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors">
+              <div>
+                <span class="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                  <i class="iconoir-view-columns-2 text-emerald-600 dark:text-emerald-400"></i>
+                  <span>Muro / División en Drywall (12 m²)</span>
+                </span>
+                <span class="text-[11px] text-slate-500 dark:text-slate-400 block mt-0.5">Perfiles galvanizados, 8 placas yeso 1/2", tornillería, cinta/masilla, mano de obra y acarreo.</span>
+              </div>
+              <button onclick="cargarCatalogoPrecios('muro_drywall')" class="px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/60 border border-emerald-200 dark:border-emerald-800 rounded-lg text-xs font-bold text-emerald-700 dark:text-emerald-300 transition-all text-center">
+                + Cargar Trabajo Completo
+              </button>
+            </div>
+
+            <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex flex-col justify-between gap-2 hover:border-cyan-300 dark:hover:border-cyan-700 transition-colors">
+              <div>
+                <span class="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                  <i class="iconoir-wrench text-cyan-600 dark:text-cyan-400"></i>
+                  <span>Punto Hidráulico / Reparación Fuga</span>
+                </span>
+                <span class="text-[11px] text-slate-500 dark:text-slate-400 block mt-0.5">Tubería PVC presión RDE 13.5, accesorios, soldadura, plomero certificado y resane.</span>
+              </div>
+              <button onclick="cargarCatalogoPrecios('punto_hidraulico')" class="px-2.5 py-1.5 bg-cyan-50 hover:bg-cyan-100 dark:bg-cyan-950/60 dark:hover:bg-cyan-900/60 border border-cyan-200 dark:border-cyan-800 rounded-lg text-xs font-bold text-cyan-700 dark:text-cyan-300 transition-all text-center">
+                + Cargar Trabajo Completo
+              </button>
+            </div>
+
+            <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex flex-col justify-between gap-2 hover:border-yellow-300 dark:hover:border-yellow-700 transition-colors">
+              <div>
+                <span class="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                  <i class="iconoir-flash text-yellow-600 dark:text-yellow-400"></i>
+                  <span>Punto Eléctrico &amp; Breakers</span>
+                </span>
+                <span class="text-[11px] text-slate-500 dark:text-slate-400 block mt-0.5">Tubería conduit, cable #12 certificado (25m), tomacorriente tierra, breaker 20A y electricista.</span>
+              </div>
+              <button onclick="cargarCatalogoPrecios('punto_electrico')" class="px-2.5 py-1.5 bg-yellow-50 hover:bg-yellow-100 dark:yellow-950/60 dark:hover:bg-yellow-900/60 border border-yellow-200 dark:border-yellow-800 rounded-lg text-xs font-bold text-yellow-700 dark:text-yellow-300 transition-all text-center">
+                + Cargar Trabajo Completo
+              </button>
+            </div>
+
+            <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex flex-col justify-between gap-2 hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors">
+              <div>
+                <span class="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                  <i class="iconoir-user text-indigo-600 dark:text-indigo-400"></i>
+                  <span>Jornales de Obra 2026 (con ARL)</span>
+                </span>
+                <span class="text-[11px] text-slate-500 dark:text-slate-400 block mt-0.5">Oficial ($120k/día), Ayudante ($70k/día), Electricista ($140k/día), Pintor ($110k/día).</span>
+              </div>
+              <button onclick="cargarCatalogoPrecios('jornales_oficiales')" class="px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/60 border border-indigo-200 dark:border-indigo-800 rounded-lg text-xs font-bold text-indigo-700 dark:text-indigo-300 transition-all text-center">
+                + Cargar Jornales
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 4: PEGAR DE WHATSAPP -->
+        <div id="syncTabContent-whatsapp" class="space-y-3 hidden">
+          <p class="text-xs text-slate-600 dark:text-slate-400">¿El ferretero o proveedor te envió la cotización por WhatsApp? Pega el texto tal cual aquí:</p>
+          <textarea id="whatsappPasteInput" rows="4" placeholder="Ejemplo:
+5 bultos cemento a 32000
+2 viajes de arena a 90000
+flete de acarreo 50000" class="w-full p-3 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 font-mono focus:outline-none focus:border-emerald-500"></textarea>
+          
+          <button type="button" onclick="importarDesdeTextoWhatsApp()" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-sm transition-all flex items-center justify-center gap-2">
+            <i class="iconoir-magic-wand text-base"></i>
+            <span>Convertir a Ítems de la Cotización</span>
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Footer -->
+      <div class="p-3 bg-slate-50 dark:bg-slate-800/60 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+        <span>Formatos admitidos: Excel (.xlsx), CSV, Google Sheets, WhatsApp</span>
+        <button class="px-3 py-1.5 rounded-lg bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200" onclick="closeSyncModal()">Cerrar</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODAL HISTORIAL DE COTIZACIONES (SQLITE) -->
+  <div class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 overflow-y-auto hidden" id="historyModal">
+    <div class="relative w-full max-w-3xl bg-white dark:bg-slate-900 rounded-2xl shadow-2xl overflow-hidden my-auto max-h-[90vh] flex flex-col border border-slate-200 dark:border-slate-800">
+      
+      <!-- Top Bar Historial -->
+      <div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-200 dark:border-blue-800">
+            <i class="iconoir-archive text-[18px]"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white tracking-tight">Historial de Cotizaciones</h3>
+            <span class="text-[11px] text-slate-500 dark:text-slate-400 font-sans">Guardadas de forma segura y privada • Control de abonos y saldos</span>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button class="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-all" onclick="cargarListaHistorial()" title="Refrescar lista">
+            <i class="iconoir-refresh-double text-base"></i>
+          </button>
+          <button class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white" onclick="closeHistoryModal()">
+            <i class="iconoir-xmark text-[18px]"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Filtros por estado -->
+      <div class="p-3 bg-slate-50/60 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700 flex items-center gap-2 overflow-x-auto text-xs font-sans">
+        <span class="text-[11px] text-slate-500 dark:text-slate-400 font-mono pl-1">Filtrar:</span>
+        <button onclick="cargarListaHistorial('todos')" class="px-2.5 py-1 rounded-lg bg-blue-600 text-white font-medium shadow-sm transition-all">Todos</button>
+        <button onclick="cargarListaHistorial('Borrador')" class="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition-all">Borradores</button>
+        <button onclick="cargarListaHistorial('Aprobada')" class="px-2.5 py-1 rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900 border border-amber-200 dark:border-amber-800 transition-all">Aprobadas</button>
+        <button onclick="cargarListaHistorial('Cobrada')" class="px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900 border border-emerald-200 dark:border-emerald-800 transition-all">Cobradas</button>
+      </div>
+
+      <!-- List Container -->
+      <div class="p-4 overflow-y-auto space-y-2.5 flex-1 max-h-[60vh] bg-slate-50/40 dark:bg-slate-900/60" id="historyListContainer">
+        <!-- Renderizado dinámico -->
+      </div>
+
+      <!-- Footer Historial -->
+      <div class="p-3 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-sans">
+        <span>Haz clic en "Editar" para cargar cualquier propuesta en vivo.</span>
+        <button class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300" onclick="closeHistoryModal()">Cerrar</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODAL MIS DATOS Y LOGO -->
+  <div class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 hidden" id="companyModal">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-md p-5 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+        <div class="flex items-center gap-2">
+          <i class="iconoir-badge-check text-blue-600 dark:text-blue-400 text-[20px]"></i>
+          <h3 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">Tus Datos y Logotipo</h3>
+        </div>
+        <button class="text-slate-400 hover:text-slate-700 dark:hover:text-white" onclick="toggleCompanyModal()">
+          <i class="iconoir-xmark text-[20px]"></i>
+        </button>
+      </div>
+      <div class="space-y-3 font-sans">
+        <div class="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center gap-3">
+          <div class="w-12 h-12 rounded-lg bg-white dark:bg-slate-800 border border-dashed border-slate-300 dark:border-slate-600 flex items-center justify-center text-slate-400 overflow-hidden" id="companyLogoPreviewContainer">
+            <i class="iconoir-media-image text-[22px]" id="companyLogoPlaceholderIcon"></i>
+            <img id="companyLogoImg" class="w-full h-full object-contain hidden" alt="Logo de Empresa"/>
+          </div>
+          <div class="flex-1">
+            <span class="text-xs font-semibold text-slate-800 dark:text-slate-200 block">Tu Logo o Foto</span>
+            <span class="text-[11px] text-slate-500 dark:text-slate-400 block">Aparecerá en el encabezado del PDF</span>
+          </div>
+          <input type="file" id="companyLogoFileInput" accept="image/*" class="hidden" onchange="handleCompanyLogoUpload(event)"/>
+          <button type="button" class="px-2.5 py-1 bg-white hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs text-slate-700 dark:text-slate-200 rounded-lg border border-slate-300 dark:border-slate-600 shadow-sm" onclick="document.getElementById('companyLogoFileInput').click()">
+            Subir Logo
+          </button>
+        </div>
+        <div class="space-y-1.5">
+          <label class="text-xs font-extrabold text-slate-700 dark:text-slate-300 uppercase">Tu Nombre o Nombre de tu Negocio</label>
+          <input class="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 rounded-xl px-3.5 py-2 text-sm font-bold text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900 focus:border-blue-500" id="signerNameInput" type="text" value="Ing. Alejandro Morales P."/>
+        </div>
+        <div class="space-y-1.5">
+          <label class="text-xs font-extrabold text-slate-700 dark:text-slate-300 uppercase">Cédula o NIT</label>
+          <input class="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 rounded-xl px-3.5 py-2 text-sm font-bold text-slate-900 dark:text-white font-mono focus:bg-white dark:focus:bg-slate-900 focus:border-blue-500" id="signerDocInput" type="text" value="NIT: 901.458.712-3"/>
+        </div>
+        <div class="space-y-1.5">
+          <label class="text-xs font-extrabold text-slate-700 dark:text-slate-300 uppercase">Dirección de tu Taller / Bodega (Punto de Salida)</label>
+          <div class="relative flex items-center">
+            <i class="iconoir-home-alt absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm"></i>
+            <input class="w-full pl-8 pr-3 py-2 bg-slate-50 dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 rounded-xl text-xs sm:text-sm font-bold text-slate-900 dark:text-white font-sans focus:bg-white dark:focus:bg-slate-900 focus:border-blue-500" id="companyOriginAddressInput" type="text" placeholder="Ej: Carrera 68 # 45-20, Bogotá o tu dirección habitual"/>
+          </div>
+        </div>
+
+        <!-- CONFIGURACIÓN RÁPIDA DE COBRO BRE-B / QR -->
+        <div class="p-3.5 bg-blue-50 dark:bg-blue-950/60 rounded-2xl border-2 border-blue-200 dark:border-blue-800 space-y-2.5">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-black text-blue-950 dark:text-blue-200 flex items-center gap-1.5">
+              <i class="iconoir-qr-code text-blue-600 dark:text-blue-400 text-base"></i>
+              <span>Cobros con Bre-B (Cualquier Banco)</span>
+            </span>
+            <span class="text-xs bg-blue-200/80 dark:bg-blue-900/60 text-blue-900 dark:text-blue-200 px-2 py-0.5 rounded font-mono font-bold">Fácil UX</span>
+          </div>
+          
+          <div class="space-y-1">
+            <label class="text-xs text-slate-700 dark:text-slate-300 font-bold block">Tu Celular o Llave Bre-B para recibir plata:</label>
+            <input type="text" id="companyBreBKeyInput" placeholder="Ej: 3104567890 o tu llave" value="310 456 7890" class="w-full bg-white dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-600 rounded-xl px-3 py-2 text-sm font-bold text-slate-900 dark:text-white font-mono"/>
+          </div>
+
+          <div class="flex items-center gap-2 pt-1">
+            <button type="button" onclick="document.getElementById('uploadCompanyQrFile').click()" class="flex-1 py-2 px-3 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center justify-center gap-2 transition-all shadow-sm">
+              <i class="iconoir-upload text-base text-blue-600 dark:text-blue-400"></i>
+              <span id="companyQrUploadLabel">Subir imagen de mi QR Bre-B</span>
+            </button>
+            <input type="file" id="uploadCompanyQrFile" accept="image/*" class="hidden" onchange="handleCompanyQrUpload(event)"/>
+          </div>
+          <p class="text-xs text-slate-600 dark:text-slate-400 font-medium">Si subes la foto de tu QR, saldrá automáticamente en todas tus cotizaciones en PDF y en la pantalla.</p>
+        </div>
+      </div>
+      <button class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-black font-sans shadow-sm" onclick="saveCompanyData()">
+        Guardar Mis Datos
+      </button>
+    </div>
+  </div>
+
+  <!-- MODAL 1: COTIZACIÓN EN PDF (VISTA PREVIA) -->
+  <div class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 overflow-y-auto hidden" id="swissModal">
+    <div class="relative w-full max-w-4xl bg-white dark:bg-slate-900 rounded-2xl shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col border border-slate-200 dark:border-slate-800">
+      
+      <!-- Top Bar con Iconoir Printer, Estado y Acciones -->
+      <div class="flex items-center justify-between p-3.5 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700 no-print">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white shadow-sm">
+            <i class="iconoir-page text-[18px]"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="text-xs sm:text-sm font-bold text-slate-900 dark:text-white tracking-tight">Vista Previa de la Cotización</h3>
+              <span id="swissPaymentStatusTag" class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-100 text-amber-900 border border-amber-300 flex items-center gap-1">
+                <i class="iconoir-lock text-[11px]"></i>
+                <span id="swissPaymentStatusLabel">BORRADOR (CON MARCA DE AGUA)</span>
+              </span>
+            </div>
+            <span class="text-[10px] text-slate-500 dark:text-slate-400 font-sans hidden sm:inline">Formato limpio y profesional • Listo para imprimir o enviar</span>
+          </div>
+        </div>
+        <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          <button id="btnDescargarPdfSwiss" class="px-2.5 sm:px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1.5 transition-all font-sans shadow-sm" onclick="intentarDescargarPDF()">
+            <i class="iconoir-download text-[16px]"></i>
+            <span id="btnDescargarPdfLabel"><span class="hidden sm:inline">Descargar </span>PDF Oficial</span>
+          </button>
+          <button class="px-2.5 sm:px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold flex items-center gap-1.5 transition-all font-sans" onclick="enviarPorWhatsApp()">
+            <i class="iconoir-chat-bubble-check text-[16px] text-emerald-600 dark:text-emerald-400"></i>
+            <span class="hidden xs:inline">WhatsApp</span>
+          </button>
+          <button class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors" onclick="closeSwissModal()">
+            <i class="iconoir-xmark text-[18px]"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- BANNER INFORMATIVO DE PAGO & MARCA DE AGUA (NO-PRINT) -->
+      <!-- Caso 1: Sin Pagar (Marca de agua activa) -->
+      <div id="watermarkNoticeBanner" class="bg-amber-50/95 dark:bg-amber-950/60 border-b border-amber-200 dark:border-amber-800 px-3 sm:px-4 py-2 sm:py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-amber-900 dark:text-amber-200 no-print transition-all">
+        <div class="flex items-center gap-2">
+          <div class="w-6 h-6 rounded-md bg-amber-200/80 dark:bg-amber-900/60 text-amber-800 dark:text-amber-200 flex items-center justify-center shrink-0">
+            <i class="iconoir-lock text-sm"></i>
+          </div>
+          <div>
+            <span class="font-bold">Borrador de prueba:</span>
+            <span class="text-amber-800 dark:text-amber-300"> Para descargar el PDF limpio y sin marcas de agua, completa el pago.</span>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 shrink-0 self-end sm:self-center">
+          <button onclick="openPaymentGatewayModal()" class="px-3.5 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-sm flex items-center gap-1.5 transition-all">
+            <i class="iconoir-credit-card text-xs"></i>
+            <span>Pagar y Desbloquear PDF</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Caso 2: Pagado (Marca de agua removida) -->
+      <div id="watermarkPaidBanner" class="hidden bg-emerald-50/95 dark:bg-emerald-950/60 border-b border-emerald-200 dark:border-emerald-800 px-3 sm:px-4 py-2 sm:py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-emerald-900 dark:text-emerald-200 no-print transition-all">
+        <div class="flex items-center gap-2">
+          <div class="w-6 h-6 rounded-md bg-emerald-200/80 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200 flex items-center justify-center shrink-0">
+            <i class="iconoir-check-circle text-sm"></i>
+          </div>
+          <div>
+            <span class="font-bold">¡PDF Desbloqueado!:</span>
+            <span class="text-emerald-800 dark:text-emerald-300"> El documento está listo y limpio para descargar, imprimir o enviar a tu cliente.</span>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 shrink-0 self-end sm:self-center">
+          <button onclick="descargarPDFOficial()" class="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm flex items-center gap-1.5 transition-all">
+            <i class="iconoir-printer text-xs"></i>
+            <span>Descargar PDF Limpio</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Swiss Canvas Sheet con Fondo Neutro (El documento se mantiene en fondo blanco puro para reflejar impresión física) -->
+      <div class="p-2 sm:p-8 overflow-y-auto bg-slate-100 dark:bg-slate-950 flex justify-center">
+        <div id="swissDocumentContent" class="w-full max-w-2xl bg-white text-slate-900 p-4 sm:p-10 shadow-xl rounded-sm swiss-document border border-slate-300 dark:border-slate-700 relative overflow-hidden" style="min-height: 800px;">
+          
+          <!-- MARCA DE AGUA DE VISTA PREVIA (ACTIVA HASTA PAGO) -->
+          <div id="swissWatermarkOverlay" class="swiss-watermark-overlay">
+            <div class="swiss-watermark-pattern"></div>
+            <div class="swiss-watermark-ghost-text">PROPUESTA TÉCNICA &amp; COMERCIAL • USO PRELIMINAR</div>
+            <div class="swiss-watermark-stamp">
+              <div class="swiss-watermark-title">VISTA PREVIA</div>
+              <div class="swiss-watermark-subtitle">DOCUMENTO NO OFICIAL • PAGO REQUERIDO</div>
+            </div>
+            <div class="swiss-watermark-ghost-text">DESCARGA OFICIAL BLOQUEADA HASTA CONFIRMAR PAGO</div>
+          </div>
+          
+          <!-- Swiss Header -->
+          <div class="flex flex-col sm:flex-row justify-between items-start gap-4 pb-6 border-b-2 border-slate-950">
+            <div class="flex items-center gap-3">
+              <div id="swissLogoContainer" class="w-14 h-14 rounded-xl bg-slate-900 text-white flex flex-col items-center justify-center font-black text-[18px] leading-tight border border-slate-700 overflow-hidden shrink-0 shadow-sm">
+                <img id="swissCustomLogoImg" class="w-full h-full object-contain hidden bg-white p-1" alt="Logo de Empresa"/>
+                <div id="swissDefaultLogoBadge" class="flex flex-col items-center justify-center text-center p-1">
+                  <div class="flex items-center gap-1 font-extrabold text-xs tracking-wider text-white">
+                    <span class="text-blue-400">SQ</span><span>PRO</span>
+                  </div>
+                  <span class="text-[7px] tracking-widest uppercase font-mono text-slate-300">OFICIAL</span>
+                </div>
+              </div>
+              <div>
+                <div class="text-base sm:text-lg font-black tracking-tight uppercase leading-none text-slate-950 swiss-header-title">PROPUESTA TÉCNICA &amp; ECONÓMICA</div>
+                <div class="text-[9px] sm:text-[10px] uppercase font-bold tracking-widest text-slate-500 mt-1">Servicios Especializados • Marco Colombia (Ley 80 / Código Civil)</div>
+              </div>
+            </div>
+            <div class="text-left sm:text-right">
+              <span class="text-[11px] font-mono font-bold text-slate-900 bg-slate-100 px-2 py-0.5 rounded border border-slate-300" id="swissDocCodeDisplay">#SQ-COL-2026-BORRADOR</span>
+              <span class="text-[11px] text-slate-500 block mt-0.5 font-mono">Bogotá D.C. • 2026</span>
+            </div>
+          </div>
+
+          <!-- Project & Client Metadata -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 py-3 sm:py-4 border-b border-slate-200 text-xs">
+            <div>
+              <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">CLIENTE / CONTRATANTE</div>
+              <div class="font-bold text-slate-900 mt-0.5" id="swissClientTarget">Constructora Los Andes S.A.S. - NIT 900.231.844-1</div>
+              <div class="text-slate-600 text-[11px] mt-0.5">Atn: Gerencia de Infraestructura • Bogotá D.C.</div>
+            </div>
+            <div>
+              <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">OBJETO CONTRACTUAL &amp; VIGENCIA</div>
+              <div class="font-bold text-slate-900 mt-0.5" id="swissServiceTarget">Remodelación Estructural, Redes Hidráulicas &amp; Acabados</div>
+              <div class="text-slate-600 text-[11px] mt-0.5">Vigencia: <span id="swissValidityTarget">30 días calendario (Vía PSE / Transferencia Bancaria)</span></div>
+            </div>
+          </div>
+
+          <!-- Items Table -->
+          <div class="py-4 overflow-x-auto">
+            <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">DESGLOSE DE ACTIVIDADES, MATERIALES Y RECURSOS (COP)</div>
+            <table class="w-full text-left text-xs min-w-[340px]">
+              <thead>
+                <tr class="border-b-2 border-slate-950 text-slate-950 font-bold">
+                  <th class="py-2 uppercase tracking-wider">Concepto / Entregable Certificado</th>
+                  <th class="py-2 text-center uppercase tracking-wider w-14 sm:w-16">Cant.</th>
+                  <th class="py-2 text-right uppercase tracking-wider w-28 sm:w-36">Subtotal (COP)</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100" id="swissTableBody">
+                <!-- Rendered dynamically -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Terms & Totals -->
+          <div class="flex flex-col sm:flex-row justify-between items-start gap-6 pt-4 border-t-2 border-slate-950">
+            <div class="w-full sm:w-1/2 space-y-2">
+              <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">CONDICIONES COMERCIALES Y CANALES DE PAGO</div>
+              <div class="p-3 bg-slate-50 border border-slate-200 rounded text-xs space-y-2">
+                <div class="flex justify-between font-semibold text-slate-800">
+                  <span>Anticipo de entrada (50%):</span>
+                  <span class="font-mono font-bold" id="swissAdvanceTarget">$686.538</span>
+                </div>
+                <div class="flex justify-between font-semibold text-slate-800">
+                  <span>Acta de liquidación final (50%):</span>
+                  <span class="font-mono font-bold" id="swissFinalTarget">$686.538</span>
+                </div>
+                <div class="p-2 bg-white rounded border border-slate-300 flex items-center gap-2.5">
+                  <div id="swissQrDynamicContainer" class="w-12 h-12 bg-white p-0.5 rounded flex items-center justify-center shrink-0 border border-slate-300 overflow-hidden">
+                    <img id="swissCustomBreBQrImg" class="w-full h-full object-contain hidden" alt="QR Bre-B"/>
+                  </div>
+                  <div class="text-[10px] leading-tight text-slate-700">
+                    <span class="font-bold text-slate-900 block" id="swissQrHeaderTitle">Código QR Bre-B (Interoperable):</span>
+                    <span class="font-mono text-emerald-800 font-bold block" id="swissPayoutMethodDoc">Llave Bre-B: 310 456 7890</span>
+                    <span class="text-[9px] text-slate-500 block">Paga desde Bancolombia, Nequi, Davivienda u otro banco</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="w-full sm:w-1/2 flex flex-col gap-1 sm:items-end text-xs">
+              <div class="flex justify-between sm:justify-end gap-6 w-full text-slate-600">
+                <span>Costos directos de ejecución:</span>
+                <span class="font-mono font-medium text-slate-900" id="swissBaseSum">$850.000</span>
+              </div>
+              <div class="flex justify-between sm:justify-end gap-6 w-full text-slate-600">
+                <span>Colchón imprevistos (5%):</span>
+                <span class="font-mono font-medium text-slate-900" id="swissContingencySum">$42.500</span>
+              </div>
+              <div class="flex justify-between sm:justify-end gap-6 w-full text-slate-600">
+                <span>Utilidad y honorarios profesionales:</span>
+                <span class="font-mono font-medium text-slate-900" id="swissProfitSum">$480.577</span>
+              </div>
+              <div class="flex justify-between sm:justify-end gap-6 w-full text-base font-bold text-slate-950 pt-2 border-t-2 border-slate-950 mt-1">
+                <span>TOTAL PROPUESTA FORMAL:</span>
+                <span class="font-mono text-lg text-slate-950 font-black" id="swissGrandTotal">$1.373.077 COP</span>
+              </div>
+              <div class="text-[10px] text-slate-500 font-mono">Régimen Simple / AIU según Estatuto Tributario Colombia.</div>
+            </div>
+          </div>
+
+          <!-- Signatures Footer -->
+          <div class="grid grid-cols-2 gap-6 pt-8 mt-6 border-t border-slate-200 text-xs">
+            <div>
+              <div class="h-10 border-b border-slate-400 mb-1.5 flex items-end pb-0.5">
+                <span class="font-serif italic text-slate-800 text-sm font-semibold" id="swissSignerNameDisplay">Ing. Alejandro Morales P.</span>
+                <span class="ml-auto text-[9px] text-emerald-700 font-mono font-bold bg-emerald-50 px-1 rounded border border-emerald-300">FIRMADO DIGITALMENTE</span>
+              </div>
+              <div class="font-bold text-slate-900 uppercase">Responsable Técnico</div>
+              <div class="text-[10px] text-slate-600 font-mono" id="swissSignerDocDisplay">NIT / CC: 901.458.712-3 • Matrícula Vigente</div>
+            </div>
+            <div>
+              <div class="min-h-[44px] border-b border-slate-400 mb-1.5 flex items-end pb-1 justify-between gap-2">
+                <div id="swissClientSignatureStamp" class="flex items-end max-h-12 overflow-hidden">
+                  <span class="font-serif italic text-slate-800 text-sm font-semibold">Aceptado Táctilmente</span>
+                </div>
+                <span class="ml-auto text-[9px] text-blue-700 font-mono font-bold bg-blue-50 px-1 rounded border border-blue-300 shrink-0">CERTIFICADO MÓVIL</span>
+              </div>
+              <div class="font-bold text-slate-900 uppercase">Aceptación del Cliente</div>
+              <div class="text-[10px] text-slate-600 font-mono" id="swissClientDocSub">Constructora Los Andes S.A.S. • Hash #9a8f2</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="p-3 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 no-print font-sans">
+        <span>Diseñado bajo el canon gráfico de la Tipografía Internacional Suiza.</span>
+        <button class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300" onclick="closeSwissModal()">
+          Cerrar
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODAL 2: PASARELA DE PAGOS SMARTQUOTE (DESBLOQUEO DE DESCARGA PDF LIMPIO) -->
+  <div class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 overflow-y-auto hidden" id="paymentGatewayModal" onclick="if(event.target === this) closePaymentGatewayModal()">
+    <div class="bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-lg p-5 sm:p-6 shadow-2xl relative space-y-4 max-h-[92vh] overflow-y-auto font-sans">
+      
+      <!-- Botones de Navegación (Volver / Cerrar) -->
+      <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+        <button type="button" class="text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white flex items-center gap-1.5 transition-colors" onclick="closePaymentGatewayModal()">
+          <i class="iconoir-arrow-left text-base"></i>
+          <span>Volver al Cotizador</span>
+        </button>
+        <button type="button" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white flex items-center justify-center transition-all" onclick="closePaymentGatewayModal()">
+          <i class="iconoir-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div class="text-center space-y-1">
+        <div class="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center mx-auto mb-2 border border-blue-200 dark:border-blue-800 shadow-sm">
+          <i class="iconoir-shield-check text-[26px]"></i>
+        </div>
+        <span class="text-[10px] font-mono uppercase font-bold text-blue-700 dark:text-blue-400 tracking-wider bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 rounded border border-blue-200 dark:border-blue-800">Pasarela Oficial SmartQuote</span>
+        <h3 class="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Desbloquear PDF Oficial Limpio</h3>
+        <p class="text-xs text-slate-500 dark:text-slate-400 font-sans">Quita la marca de agua y descarga el documento formal con tu logo listo para entregar a tu cliente.</p>
+      </div>
+
+      <!-- ETAPA 1: REGISTRO DE DATOS (SOLO DATOS, EL QR NO SE MUESTRA TODAVÍA) -->
+      <div id="sqFlowStage1" class="space-y-4">
+        <!-- Selector de Tarifa Transparente SmartQuote -->
+        <div class="grid grid-cols-2 gap-2.5">
+          <label class="cursor-pointer border-2 border-blue-600 dark:border-blue-500 rounded-2xl p-3 bg-blue-50/50 dark:bg-blue-950/40 relative flex flex-col justify-between">
+            <input type="radio" name="smartquote_plan" value="single" checked onchange="updateSmartQuoteFeeDisplay(5000)" class="sr-only"/>
+            <div>
+              <span class="text-[10px] font-bold uppercase text-blue-700 dark:text-blue-300 block">1 Cotización</span>
+              <span class="text-lg font-black font-mono text-slate-900 dark:text-white block mt-0.5">$5.000 <span class="text-[10px] font-sans font-normal text-slate-500">COP</span></span>
+            </div>
+            <span class="text-[10px] text-slate-500 dark:text-slate-400 mt-1 block">Para este trabajo puntual</span>
+            <span class="absolute top-2 right-2 w-3.5 h-3.5 rounded-full bg-blue-600 border-2 border-white dark:border-slate-900"></span>
+          </label>
+
+          <label class="cursor-pointer border border-slate-200 dark:border-slate-700 hover:border-blue-400 rounded-2xl p-3 bg-white dark:bg-slate-800/60 relative flex flex-col justify-between">
+            <input type="radio" name="smartquote_plan" value="pro" onchange="updateSmartQuoteFeeDisplay(49000)" class="sr-only"/>
+            <div>
+              <div class="flex items-center gap-1">
+                <span class="text-[10px] font-bold uppercase text-amber-600 dark:text-amber-400 block">Plan Ilimitado</span>
+                <span class="text-[9px] bg-amber-100 text-amber-800 px-1 rounded font-bold">Pro</span>
+              </div>
+              <span class="text-lg font-black font-mono text-slate-900 dark:text-white block mt-0.5">$49.000 <span class="text-[10px] font-sans font-normal text-slate-500">COP</span></span>
+            </div>
+            <span class="text-[10px] text-slate-500 dark:text-slate-400 mt-1 block">PDFs ilimitados de por vida</span>
+          </label>
+        </div>
+
+        <!-- Formulario: Datos de Quien Va a Pagar -->
+        <div class="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-3">
+          <div class="flex items-center gap-2">
+            <span class="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-black">1</span>
+            <h4 class="text-sm font-black text-slate-900 dark:text-white">Ingresa los datos de quien va a pagar</h4>
+          </div>
+
+          <div class="space-y-2.5">
+            <div>
+              <label class="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">Nombre Completo:</label>
+              <input type="text" id="sqBuyerName" placeholder="Ej: Carlos Gómez Restrepo" class="w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-600 rounded-xl text-sm font-bold text-slate-900 dark:text-white focus:border-blue-600 focus:outline-none"/>
+            </div>
+            <div>
+              <label class="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">Celular (WhatsApp):</label>
+              <input type="tel" id="sqBuyerPhone" placeholder="Ej: 310 123 4567" class="w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-600 rounded-xl text-sm font-bold text-slate-900 dark:text-white font-mono focus:border-blue-600 focus:outline-none"/>
+            </div>
+          </div>
+
+          <button type="button" onclick="registrarYProcederAlPago()" id="btnRegistrarYContinuar" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-black flex items-center justify-center gap-2 shadow-md shadow-blue-600/25 transition-all mt-2">
+            <span>Registrar Datos y Continuar al Pago</span>
+            <i class="iconoir-arrow-right text-base"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- ETAPA 2: NOTIFICACIÓN DE REGISTRO EXITOSO + QR ARRIERO PRO -->
+      <div id="sqFlowStage2" class="space-y-4 hidden">
+        <!-- NOTIFICACIÓN DE DATOS REGISTRADOS -->
+        <div class="p-3.5 bg-emerald-50 dark:bg-emerald-950/70 border-2 border-emerald-500 rounded-2xl flex items-center gap-3 shadow-sm">
+          <div class="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-sm">
+            <i class="iconoir-check text-2xl font-black"></i>
+          </div>
+          <div class="flex-1 min-w-0">
+            <strong class="text-xs sm:text-sm font-black text-emerald-950 dark:text-emerald-100 block">¡Tus datos han sido registrados con éxito!</strong>
+            <span class="text-[11px] text-emerald-800 dark:text-emerald-300 block truncate">
+              Titular: <strong id="sqRegisteredNameDisplay" class="font-bold"></strong> • Tel: <strong id="sqRegisteredPhoneDisplay" class="font-bold"></strong>
+            </span>
+          </div>
+        </div>
+
+        <!-- SELLO DE RECAUDO CON QR OFICIAL ARRIERO PRO (BRE-B / NEQUI NEGOCIOS) -->
+        <div class="p-4 rounded-2xl bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white border-2 border-indigo-500/40 shadow-xl space-y-3">
+          <div class="flex items-center justify-between border-b border-white/10 pb-2.5">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-black tracking-wider text-cyan-400 font-mono">Bre-B</span>
+              <span class="text-white/40">|</span>
+              <span class="text-xs font-black tracking-wider text-pink-400 font-mono">Nequi</span>
+            </div>
+            <span class="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-950/80 border border-emerald-600/40 px-2.5 py-0.5 rounded-full flex items-center gap-1.5 shadow-sm">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span>Cuenta Verificada</span>
+            </span>
+          </div>
+
+          <div class="flex flex-col sm:flex-row items-center justify-center gap-4 text-center sm:text-left py-1">
+            <!-- CÓDIGO QR OFICIAL ARRIERO PRO -->
+            <div class="w-32 h-32 sm:w-36 sm:h-36 bg-white p-2 rounded-2xl shadow-2xl border-2 border-white/80 shrink-0 flex items-center justify-center overflow-hidden">
+              <img src="assets/qr_nequi_square.png" class="w-full h-full object-contain" alt="QR Nequi Arriero Pro David Pineda"/>
+            </div>
+
+            <div class="flex-1 space-y-2 w-full">
+              <div>
+                <span class="text-[10px] text-cyan-300 font-bold uppercase tracking-wider block">Destinatario Oficial:</span>
+                <strong class="text-base sm:text-lg font-black text-white block tracking-tight" id="sqCompanyOwnerName">Arriero Pro</strong>
+                <span class="text-xs text-slate-300 font-medium block">David Pineda</span>
+              </div>
+
+              <!-- LLAVE NEQUI NEGOCIOS -->
+              <div class="p-2.5 bg-white/10 dark:bg-white/5 backdrop-blur-sm rounded-xl border border-white/15 flex items-center justify-between gap-2">
+                <div class="text-left">
+                  <span class="text-[10px] text-slate-300 font-medium block">Llave Nequi Negocios:</span>
+                  <span class="font-mono font-black text-sm text-cyan-300 tracking-wider" id="sqCompanyPhoneDisplay">0091679903</span>
+                </div>
+                <button type="button" onclick="copiarLlaveEmpresaSmartQuote()" class="px-2.5 py-1 bg-white/20 hover:bg-white/30 text-white rounded-lg text-xs font-bold flex items-center gap-1 transition-all shrink-0">
+                  <i class="iconoir-copy text-sm text-cyan-300"></i>
+                  <span id="btnCopiarLlaveSqLabel">Copiar</span>
+                </button>
+              </div>
+
+              <div class="flex items-center gap-2 pt-0.5">
+                <button type="button" onclick="abrirNequiEmpresaSmartQuote()" class="w-full py-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition-all shadow-md">
+                  <i class="iconoir-open-new-window text-sm"></i>
+                  <span>Abrir App Nequi</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="text-center pt-2 border-t border-white/10">
+            <span class="text-[11px] text-slate-300">Transfiere exactamente <strong class="text-cyan-300 font-mono font-bold text-xs" id="sqFeeCardDisplay">$5.000 COP</strong> para desbloquear tu cotización limpia.</span>
+          </div>
+        </div>
+
+        <!-- FORMAS DE CONFIRMACIÓN (WHATSAPP O SUBIR FOTO) -->
+        <div class="space-y-3">
+          <!-- OPCIÓN 1: WHATSAPP (LA MÁS FÁCIL PARA EL 90% DE USUARIOS) -->
+          <div class="p-4 bg-emerald-50 dark:bg-emerald-950/60 rounded-2xl border-2 border-emerald-500 shadow-sm space-y-2 text-center">
+            <span class="inline-block text-[10px] font-black uppercase tracking-wider text-emerald-800 dark:text-emerald-300 bg-emerald-200/70 dark:bg-emerald-900/70 px-2.5 py-0.5 rounded-full">
+              Opción 1 • La más fácil y rápida
+            </span>
+            <p class="text-xs text-slate-600 dark:text-slate-300 font-sans">
+              Toca el botón, envía la captura en el chat de WhatsApp y tu PDF oficial se desbloquea de inmediato.
+            </p>
+            <button type="button" onclick="confirmarPagoPorWhatsApp()" id="btnConfirmarWhatsAppSq" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs sm:text-sm font-black flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/25 transition-all">
+              <i class="iconoir-chat-bubble text-lg"></i>
+              <span>📲 Enviar por WhatsApp y Desbloquear PDF</span>
+            </button>
+          </div>
+
+          <!-- OPCIÓN 2: SUBIR FOTO AQUÍ O DIGITAR NÚMERO NEQUI -->
+          <div class="p-4 bg-white dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                <span class="w-5 h-5 rounded-full bg-slate-700 text-white flex items-center justify-center text-[10px] font-bold">2</span>
+                <span>Opción 2 • Subir la foto aquí directamente</span>
+              </span>
+              <span class="text-[10px] text-slate-400">Sin salir de la web</span>
+            </div>
+
+            <!-- Input de Archivo Oculto -->
+            <input type="file" id="sqComprobanteFileInput" accept="image/*,application/pdf" class="hidden" onchange="manejarArchivoComprobante(this)"/>
+
+            <!-- Dropzone / Botón de Carga -->
+            <div id="sqUploadDropzone" onclick="document.getElementById('sqComprobanteFileInput').click()" class="cursor-pointer p-3.5 bg-slate-50 hover:bg-slate-100 dark:bg-slate-900/60 dark:hover:bg-slate-900 rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-emerald-500 transition-all flex items-center justify-center gap-2 text-center">
+              <i class="iconoir-media-image text-lg text-emerald-600 dark:text-emerald-400"></i>
+              <span class="text-xs font-bold text-slate-800 dark:text-slate-200">Toca para seleccionar la foto del pago</span>
+            </div>
+
+            <!-- Vista Previa del Comprobante (Oculto inicialmente) -->
+            <div id="sqComprobantePreviewBox" class="hidden p-2.5 bg-emerald-50 dark:bg-emerald-950/60 rounded-xl border border-emerald-300 dark:border-emerald-700 flex items-center justify-between gap-3 text-left">
+              <div class="flex items-center gap-2.5 min-w-0">
+                <img id="sqComprobantePreviewImg" class="w-10 h-10 rounded-lg object-cover border border-emerald-400 shrink-0 shadow-sm" alt="Comprobante"/>
+                <div class="min-w-0">
+                  <strong class="text-xs font-bold text-emerald-950 dark:text-emerald-100 block truncate" id="sqComprobanteFileName">comprobante.jpg</strong>
+                  <span class="text-[10px] text-emerald-700 dark:text-emerald-300 font-semibold flex items-center gap-1">
+                    <i class="iconoir-check text-xs"></i> Foto cargada
+                  </span>
+                </div>
+              </div>
+              <button type="button" onclick="quitarArchivoComprobante()" class="p-1 text-slate-400 hover:text-red-500 rounded-lg transition-colors">
+                <i class="iconoir-trash text-base"></i>
+              </button>
+            </div>
+
+            <!-- Botón para subir la foto -->
+            <button type="button" onclick="enviarComprobanteYAprobar()" id="btnEnviarComprobanteSq" class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-slate-700 dark:hover:bg-slate-600 text-white rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition-all">
+              <i class="iconoir-check text-base"></i>
+              <span>Confirmar Foto y Desbloquear</span>
+            </button>
+
+            <!-- O Digitar Número de Aprobación Nequi -->
+            <div class="pt-2 border-t border-slate-100 dark:border-slate-700/60">
+              <label class="text-[10px] text-slate-500 dark:text-slate-400 block mb-1">O escribe el número de aprobación de tu Nequi (ej: M8491 o PIN):</label>
+              <div class="flex items-center gap-2">
+                <input type="text" id="sqPaymentRefInput" placeholder="Ej: M984210 o PIN" class="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg text-xs font-mono font-bold text-slate-900 dark:text-white focus:outline-none focus:border-blue-600"/>
+                <button type="button" onclick="validarPagoSmartQuote()" id="btnValidarPagoSq" class="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-all whitespace-nowrap">
+                  Aprobar
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <button type="button" onclick="volverAEditarDatosComprador()" class="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 underline font-sans block mx-auto pt-1">
+            ← Modificar mis datos o cambiar de plan
+          </button>
+        </div>
+      </div>
+
+      <!-- ETAPA 3: PAGO EXITOSO Y DESCARGA OFICIAL LISTA -->
+      <div id="sqFlowStage3" class="space-y-5 py-4 text-center hidden">
+        <div class="w-16 h-16 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto border-4 border-emerald-500 shadow-xl shadow-emerald-500/20">
+          <i class="iconoir-check text-3xl font-black"></i>
+        </div>
+
+        <div class="space-y-1.5">
+          <span class="text-[10px] font-mono uppercase font-bold text-emerald-700 dark:text-emerald-400 tracking-wider bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
+            Transacción Confirmada
+          </span>
+          <h3 class="text-2xl font-black text-slate-900 dark:text-white tracking-tight">¡Pago Exitoso!</h3>
+          <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-sans max-w-sm mx-auto">
+            El pago fue verificado y registrado correctamente. Tu cotización oficial limpia sin marca de agua está lista.
+          </p>
+        </div>
+
+        <div class="p-3 bg-emerald-50/80 dark:bg-emerald-950/40 rounded-xl border border-emerald-200 dark:border-emerald-800 text-xs text-emerald-900 dark:text-emerald-200 font-sans">
+          ✓ Licencia activada para cotización: <strong class="font-mono font-bold" id="sqSuccessQuoteCodeDisplay">COT</strong>
+        </div>
+
+        <button type="button" onclick="descargarPDFOficialTrasExito()" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-sm font-black flex items-center justify-center gap-2 shadow-xl shadow-emerald-600/30 transition-all">
+          <i class="iconoir-download text-lg"></i>
+          <span>Descargar PDF Oficial Limpio Ahora</span>
+        </button>
+      </div>
+
+      <!-- ENLACE DE BORRADOR CON MARCA DE AGUA (ESTRICTO) -->
+      <div class="pt-1 text-center space-y-1 border-t border-slate-100 dark:border-slate-800">
+        <button onclick="imprimirBorradorConMarcaAgua()" class="text-xs text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white underline font-sans">
+          Descargar borrador gratis (con marca de agua visible)
+        </button>
+        <p class="text-[10px] text-slate-400 dark:text-slate-500 font-sans">El PDF oficial limpio sin marcas solo se descarga tras confirmar el pago.</p>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <!-- MODAL: PASARELA DE PAGO SEGURA SMARTCHECKOUT (ANTICIPO DEL CLIENTE) -->
+  <div class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 overflow-y-auto hidden" id="secureCheckoutModal" onclick="if(event.target === this) closeSecureCheckoutModal()">
+    <div class="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border-2 border-slate-200 dark:border-slate-800 overflow-hidden my-auto max-h-[92vh] flex flex-col font-sans">
+      
+      <!-- Top Bar de Seguridad Bancaria -->
+      <div class="p-4 bg-gradient-to-r from-emerald-600 via-teal-700 to-blue-700 text-white flex items-center justify-between shadow-sm">
+        <div class="flex items-center gap-2.5">
+          <div class="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30 text-white">
+            <i class="iconoir-shield-check text-2xl"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="text-sm font-black tracking-tight">Pasarela de Pago Segura</h3>
+              <span class="text-[9px] font-mono font-bold bg-white/25 px-2 py-0.5 rounded-full uppercase tracking-wider">Cifrado SHA-256</span>
+            </div>
+            <span class="text-[11px] text-emerald-100 block">SmartQuote &amp; Red Interoperable Bre-B Colombia</span>
+          </div>
+        </div>
+        <button type="button" class="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-all" onclick="closeSecureCheckoutModal()">
+          <i class="iconoir-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <!-- Cuerpo del Checkout -->
+      <div class="p-5 overflow-y-auto space-y-4 max-h-[75vh]">
+        
+        <!-- Tarjeta de Resumen del Monto -->
+        <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+          <div>
+            <span class="text-[11px] uppercase font-bold text-slate-500 dark:text-slate-400 block">Anticipo Requerido (50%)</span>
+            <div class="text-2xl sm:text-3xl font-black font-mono text-emerald-700 dark:text-emerald-400" id="chkModalMontoDisplay">$686.538 COP</div>
+            <span class="text-xs text-slate-600 dark:text-slate-300 font-medium" id="chkModalCotizacionRef">Obra: #COT-2026-001</span>
+          </div>
+          <div class="text-right">
+            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 text-xs font-mono font-bold border border-emerald-300 dark:border-emerald-700">
+              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              En Línea
+            </span>
+          </div>
+        </div>
+
+        <!-- SELLO DE TITULARIDAD Y PROTECCIÓN CONTRA HACKEOS (VITAL) -->
+        <div class="p-4 rounded-2xl bg-emerald-50/90 dark:bg-emerald-950/40 border-2 border-emerald-300 dark:border-emerald-700 space-y-2.5">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-black uppercase tracking-wider text-emerald-950 dark:text-emerald-200 flex items-center gap-1.5">
+              <i class="iconoir-badge-check text-emerald-600 dark:text-emerald-400 text-base"></i>
+              <span>Destinatario Verificado (Sello Antifraude)</span>
+            </span>
+            <span class="text-[10px] font-mono font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/60 px-2 py-0.5 rounded" id="chkModalTokenDisplay">SQ-SEC-VERIFICADO</span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+            <div class="bg-white/80 dark:bg-slate-900/80 p-2.5 rounded-xl border border-emerald-200 dark:border-emerald-800">
+              <span class="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">Titular Oficial:</span>
+              <strong class="text-slate-900 dark:text-white font-bold block truncate" id="chkModalTitularNombre">Ing. Alejandro Morales P.</strong>
+            </div>
+            <div class="bg-white/80 dark:bg-slate-900/80 p-2.5 rounded-xl border border-emerald-200 dark:border-emerald-800">
+              <span class="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">Cédula / NIT:</span>
+              <strong class="text-slate-900 dark:text-white font-mono font-bold block truncate" id="chkModalTitularDoc">NIT: 901.458.712-3</strong>
+            </div>
+            <div class="bg-white/80 dark:bg-slate-900/80 p-2.5 rounded-xl border border-emerald-200 dark:border-emerald-800">
+              <span class="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">Medio de Pago:</span>
+              <strong class="text-slate-900 dark:text-white font-bold block" id="chkModalTitularCanal">Nequi / Bre-B</strong>
+            </div>
+            <div class="bg-white/80 dark:bg-slate-900/80 p-2.5 rounded-xl border border-emerald-200 dark:border-emerald-800">
+              <span class="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">Número / Llave de Cobro:</span>
+              <strong class="text-emerald-700 dark:text-emerald-400 font-mono font-bold block text-sm" id="chkModalTitularNumero">310 456 7890</strong>
+            </div>
+          </div>
+
+          <!-- ADVERTENCIA DE SEGURIDAD OBLIGATORIA COLOMBIA -->
+          <div class="p-2.5 bg-amber-50 dark:bg-amber-950/40 rounded-xl border border-amber-300 dark:border-amber-800 text-[11px] text-amber-900 dark:text-amber-200 leading-relaxed flex items-start gap-2">
+            <i class="iconoir-warning-triangle text-amber-600 dark:text-amber-400 text-base shrink-0 mt-0.5"></i>
+            <span><strong>Regla de oro contra hackeos:</strong> Al escanear o transferir desde tu banco (Nequi, Daviplata o Bancolombia), la app siempre te mostrará el titular registrado. <strong>Confirma que coincida con <span id="chkModalReglaOroNombre" class="font-bold underline">Ing. Alejandro Morales P.</span></strong>.</span>
+          </div>
+        </div>
+
+        <!-- CÓDIGO QR Y ACCIONES DIRECTAS EN 1 CLIC -->
+        <div class="space-y-3">
+          <div class="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 text-center space-y-3 shadow-sm">
+            <span class="text-xs font-bold text-slate-700 dark:text-slate-300 block">
+              1. Escanea el código QR desde tu app bancaria:
+            </span>
+            <div class="flex items-center justify-center">
+              <div id="chkModalQrDynamicContainer" class="w-36 h-36 bg-white p-2 rounded-2xl border-2 border-slate-300 dark:border-slate-600 shadow flex items-center justify-center overflow-hidden">
+                <img id="chkModalCustomQrImg" class="w-full h-full object-contain hidden" alt="QR Bre-B"/>
+              </div>
+            </div>
+
+            <!-- Botones de Acción Inmediata -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+              <button type="button" onclick="copiarLlaveSeguraModal()" class="py-2.5 px-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl text-xs font-bold border border-slate-300 dark:border-slate-600 flex items-center justify-center gap-1.5 transition-all shadow-sm">
+                <i class="iconoir-copy text-base text-blue-600 dark:text-blue-400"></i>
+                <span id="btnCopiarLlaveSeguraLabel">Copiar Celular / Llave</span>
+              </button>
+              <button type="button" onclick="irAAppBancariaDirecto()" class="py-2.5 px-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition-all shadow-sm">
+                <i class="iconoir-open-new-window text-base"></i>
+                <span>Abrir mi App Bancaria</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- FORMULARIO DE REPORTE DE PAGO ANTIFRAUDE (EVITA COMPROBANTES FALSOS) -->
+        <div class="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-3">
+          <div class="flex items-center gap-2">
+            <i class="iconoir-check-circle text-emerald-600 dark:text-emerald-400 text-base"></i>
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">2. ¿Ya hiciste la transferencia? Confirma tu pago aquí:</span>
+          </div>
+          <p class="text-[11px] text-slate-600 dark:text-slate-400">Escribe el número de comprobante o referencia que te dio tu banco para vincularlo a tu cotización:</p>
+
+          <div class="space-y-2">
+            <div>
+              <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300 block mb-1">Número de Aprobación Bancaria / CUS / Ref:</label>
+              <input type="text" id="chkInputComprobanteRef" placeholder="Ej: 984521 o M98214" class="w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-600 rounded-xl text-sm font-bold text-slate-900 dark:text-white font-mono focus:border-emerald-500 focus:outline-none shadow-sm"/>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <input type="file" id="chkInputComprobanteImg" accept="image/*" class="hidden" onchange="handleComprobanteImgUpload(event)"/>
+              <button type="button" onclick="document.getElementById('chkInputComprobanteImg').click()" class="flex-1 py-2 px-3 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-semibold border border-slate-300 dark:border-slate-600 flex items-center justify-center gap-1.5 transition-all">
+                <i class="iconoir-camera text-sm text-slate-500"></i>
+                <span id="chkComprobanteImgLabel">Adjuntar foto del comprobante (opcional)</span>
+              </button>
+            </div>
+
+            <button type="button" onclick="enviarReportePagoCliente()" id="btnEnviarReportePago" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs sm:text-sm font-black flex items-center justify-center gap-2 shadow-md shadow-emerald-600/25 transition-all mt-2">
+              <i class="iconoir-send-dollars text-lg"></i>
+              <span>Confirmar Pago y Notificar al Maestro</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Footer del Checkout -->
+      <div class="p-3 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-sans">
+        <span class="flex items-center gap-1">
+          <i class="iconoir-lock text-sm text-emerald-600"></i>
+          <span>Protección Antifraude SmartQuote</span>
+        </span>
+        <button class="px-3 py-1 rounded-lg bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 font-semibold" onclick="closeSecureCheckoutModal()">
+          Cerrar
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODAL 3: PLAN PRO -->
+  <div class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 hidden" id="proModal">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-md p-6 shadow-2xl relative space-y-4">
+      <button class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 dark:hover:text-white" onclick="closeProModal()">
+        <i class="iconoir-xmark text-[20px]"></i>
+      </button>
+      <div class="text-center space-y-1">
+        <div class="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center mx-auto mb-2 border border-blue-200 dark:border-blue-800 shadow-sm">
+          <i class="iconoir-crown text-[26px]"></i>
+        </div>
+        <span class="text-[11px] font-mono uppercase font-bold text-emerald-700 dark:text-emerald-400 tracking-wider">Beneficios Ilimitados</span>
+        <h3 class="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Pásate a la Versión Pro</h3>
+        <p class="text-xs text-slate-500 dark:text-slate-400 font-sans">Descarga todas las cotizaciones que quieras en PDF limpio y pon tu propio logo.</p>
+      </div>
+      <div class="space-y-2 bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-sans">
+        <div class="flex items-center gap-2 text-slate-700 dark:text-slate-300">
+          <i class="iconoir-check-circle text-emerald-600 dark:text-emerald-400 text-[17px]"></i>
+          <span>Cotizaciones en PDF limpias y sin marcas de agua</span>
+        </div>
+        <div class="flex items-center gap-2 text-slate-700 dark:text-slate-300">
+          <i class="iconoir-check-circle text-emerald-600 dark:text-emerald-400 text-[17px]"></i>
+          <span>Código QR listo para cobrar el anticipo por Nequi o Daviplata</span>
+        </div>
+        <div class="flex items-center gap-2 text-slate-700 dark:text-slate-300">
+          <i class="iconoir-check-circle text-emerald-600 dark:text-emerald-400 text-[17px]"></i>
+          <span>Firma en pantalla directa para que el cliente firme en tu celular</span>
+        </div>
+      </div>
+      <div class="text-center">
+        <div class="text-3xl font-black font-mono text-slate-900 dark:text-white">$49.000 <span class="text-xs font-sans text-slate-500 dark:text-slate-400 font-normal">COP</span></div>
+        <span class="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 font-sans">Pago único (sin mensualidades)</span>
+      </div>
+      <button class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 shadow-sm transition-all font-sans" onclick="openPaymentGatewayModal(); closeProModal();">
+        <i class="iconoir-lock text-[18px]"></i>
+        <span>Activar Versión Pro</span>
+      </button>
+      <p class="text-[10px] text-slate-500 dark:text-slate-400 text-center font-sans">Garantía total de 7 días. Si no te gusta, te devolvemos el dinero.</p>
+    </div>
+  </div>
+
+  <!-- MODAL: BUZÓN DE MEJORAS, SUGERENCIAS Y NUEVAS FUNCIONES -->
+  <div class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 overflow-y-auto hidden" id="feedbackModal" onclick="if(event.target === this) closeFeedbackModal()">
+    <div class="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border-2 border-slate-200 dark:border-slate-800 overflow-hidden my-auto max-h-[92vh] flex flex-col font-sans">
+      
+      <!-- Top Bar Modal -->
+      <div class="p-4 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 text-white flex items-center justify-between shadow-sm">
+        <div class="flex items-center gap-2.5">
+          <div class="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30 text-white shrink-0">
+            <i class="iconoir-chat-bubble-empty text-2xl"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="text-sm font-black tracking-tight">¿Qué quieres mejorar o agregar?</h3>
+              <span class="text-[9px] font-mono font-bold bg-white/25 px-2 py-0.5 rounded-full uppercase tracking-wider">Tu Opinión Cuenta</span>
+            </div>
+            <span class="text-[11px] text-blue-100 block">Dinos qué herramienta, material o cálculo necesitas en tu oficio</span>
+          </div>
+        </div>
+        <button type="button" class="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-all" onclick="closeFeedbackModal()">
+          <i class="iconoir-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <!-- Contenido del Modal -->
+      <div class="p-5 overflow-y-auto space-y-4">
+        
+        <!-- VISTA FORMULARIO -->
+        <div id="feedbackFormView" class="space-y-4">
+          <div class="p-3 bg-blue-50/80 dark:bg-blue-950/40 rounded-xl border border-blue-200/80 dark:border-blue-800 text-xs text-blue-900 dark:text-blue-200 font-sans flex items-start gap-2.5">
+            <i class="iconoir-light-bulb text-base text-blue-600 dark:text-blue-400 shrink-0 mt-0.5"></i>
+            <p>Construimos SmartQuote pensando en el día a día de los maestros y contratistas colombianos. Si falta un material, quieres una plantilla nueva o una función para cobrar más fácil, escríbelo aquí.</p>
+          </div>
+
+          <!-- Selector de Categoría / Tema -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">¿De qué se trata tu idea o reporte?</label>
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2" id="feedbackCategoryChips">
+              <button type="button" onclick="selectFeedbackCategory('Nueva Función', this)" class="feedback-chip active-chip px-2.5 py-2 rounded-xl text-xs font-bold border transition-all text-left flex items-center gap-1.5 bg-blue-600 text-white border-blue-600 shadow-sm">
+                <span>💡 Nueva Función</span>
+              </button>
+              <button type="button" onclick="selectFeedbackCategory('Materiales o Precios', this)" class="feedback-chip px-2.5 py-2 rounded-xl text-xs font-bold border transition-all text-left flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-blue-400">
+                <span>🧱 Más Materiales</span>
+              </button>
+              <button type="button" onclick="selectFeedbackCategory('Nueva Plantilla Oficio', this)" class="feedback-chip px-2.5 py-2 rounded-xl text-xs font-bold border transition-all text-left flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-blue-400">
+                <span>🛠️ Nueva Plantilla</span>
+              </button>
+              <button type="button" onclick="selectFeedbackCategory('Celular o Pantalla', this)" class="feedback-chip px-2.5 py-2 rounded-xl text-xs font-bold border transition-all text-left flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-blue-400">
+                <span>📱 En Celular</span>
+              </button>
+              <button type="button" onclick="selectFeedbackCategory('Reportar Falla', this)" class="feedback-chip px-2.5 py-2 rounded-xl text-xs font-bold border transition-all text-left flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-blue-400">
+                <span>🐞 Reportar Falla</span>
+              </button>
+              <button type="button" onclick="selectFeedbackCategory('Otra Sugerencia', this)" class="feedback-chip px-2.5 py-2 rounded-xl text-xs font-bold border transition-all text-left flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-blue-400">
+                <span>⭐ Otra Idea</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Mensaje / Sugerencia -->
+          <div>
+            <label for="feedbackMensajeInput" class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">Escribe aquí tu sugerencia o lo que quisieras agregar: <span class="text-rose-500">*</span></label>
+            <textarea id="feedbackMensajeInput" rows="4" class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border-2 border-slate-200 dark:border-slate-700 rounded-xl text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-600 font-sans leading-relaxed" placeholder="Ej: Me gustaría que agregaran cotizaciones para techos en teja de barro, o que calcule automáticamente el desperdicio de tubería..."></textarea>
+          </div>
+
+          <!-- Datos de Contacto Opcionales -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+            <div>
+              <label for="feedbackNombreInput" class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">Tu nombre o empresa (opcional):</label>
+              <input type="text" id="feedbackNombreInput" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-600 font-sans" placeholder="Ej: Maestro Carlos / Aluminios El Triunfo"/>
+            </div>
+            <div>
+              <label for="feedbackContactoInput" class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">WhatsApp o Celular (opcional):</label>
+              <input type="tel" id="feedbackContactoInput" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-600 font-sans" placeholder="Para avisarte cuando esté listo"/>
+            </div>
+          </div>
+
+          <!-- Botones de Acción -->
+          <div class="space-y-2 pt-2">
+            <button type="button" id="btnEnviarFeedbackSistema" onclick="enviarFeedbackAlSistema()" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-md shadow-blue-600/25 transition-all">
+              <i class="iconoir-send text-base"></i>
+              <span>Enviar Sugerencia al Sistema</span>
+            </button>
+
+            <button type="button" onclick="enviarFeedbackPorWhatsApp()" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition-all">
+              <i class="iconoir-chat-bubble text-base"></i>
+              <span>Enviar directo por WhatsApp a Soporte</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- VISTA DE ÉXITO TRAS ENVIAR -->
+        <div id="feedbackSuccessView" class="hidden text-center py-6 space-y-4">
+          <div class="w-16 h-16 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto border-4 border-emerald-500 shadow-xl shadow-emerald-500/20">
+            <i class="iconoir-check text-3xl font-black"></i>
+          </div>
+
+          <div class="space-y-1.5">
+            <h3 class="text-xl font-bold text-slate-900 dark:text-white">¡Sugerencia Recibida!</h3>
+            <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 font-sans max-w-sm mx-auto">
+              Muchas gracias por tu aporte. Nuestro equipo revisa todas las ideas de los contratistas para añadir nuevas funciones y materiales cada semana.
+            </p>
+          </div>
+
+          <div class="pt-2 flex flex-col sm:flex-row items-center justify-center gap-2">
+            <button type="button" onclick="resetFeedbackForm()" class="w-full sm:w-auto px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition-all">
+              Enviar otra sugerencia
+            </button>
+            <button type="button" onclick="closeFeedbackModal()" class="w-full sm:w-auto px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all">
+              Cerrar
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="w-full border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-5 text-xs text-slate-500 dark:text-slate-400 font-sans">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div class="flex items-center gap-2">
+        <span class="font-bold text-slate-800 dark:text-slate-200">SmartQuote FinTech</span>
+        <span>• Sistema Profesional de Cotizaciones y Recaudos para Independientes en Colombia</span>
+      </div>
+      <div class="flex items-center gap-4 text-slate-500 dark:text-slate-400 font-sans">
+        <a class="hover:text-slate-800 dark:hover:text-slate-200 transition-colors" href="#">Términos Legales</a>
+        <a class="hover:text-slate-800 dark:hover:text-slate-200 transition-colors" href="#">Privacidad y Cifrado</a>
+        <span class="font-mono">© 2026 SmartQuote</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- BARRA FLOTANTE FIJA EN MÓVILES (Dock ultra-rápido para cotizar en obra) -->
+  <div id="mobileStickyBottomBar" class="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t-2 border-slate-200 dark:border-slate-800 px-3.5 py-2.5 shadow-2xl flex items-center justify-between transition-transform">
+    <div class="flex flex-col min-w-0 pr-2">
+      <span class="text-[10px] text-slate-600 dark:text-slate-300 uppercase font-black tracking-wider truncate">Total</span>
+      <span id="mobileStickyTotalDisplay" class="text-sm sm:text-base font-black font-mono text-slate-950 dark:text-white truncate">$1.373.077</span>
+    </div>
+    <div class="flex items-center gap-2 shrink-0">
+      <button type="button" onclick="openHistoryModal()" class="px-2.5 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl text-xs font-bold border border-slate-300 dark:border-slate-600 shadow-sm flex items-center gap-1.5" title="Ver cotizaciones y abonos">
+        <i class="iconoir-folder text-base text-blue-600 dark:text-blue-400"></i>
+        <span>Historial</span>
+      </button>
+      <button type="button" onclick="openSwissModal()" class="px-3 py-2 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/70 text-blue-700 dark:text-blue-300 rounded-xl text-xs font-black border-2 border-blue-200 dark:border-blue-800 shadow-sm flex items-center gap-1.5" title="Previsualizar PDF oficial">
+        <i class="iconoir-eye text-base text-blue-600 dark:text-blue-400"></i>
+        <span>Previsualizar</span>
+      </button>
+      <button type="button" onclick="enviarPorWhatsApp()" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black shadow-md shadow-emerald-600/20 flex items-center gap-1.5" title="Enviar cotización a WhatsApp">
+        <i class="iconoir-chat-bubble text-base"></i>
+        <span>WhatsApp</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- BOTÓN FLOTANTE: BUZÓN DE IDEAS, MEJORAS Y CHAT DE SOPORTE -->
+  <button id="btnFeedbackChat" onclick="openFeedbackModal()" class="fixed bottom-20 right-3 sm:right-6 sm:bottom-6 z-40 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-700 hover:to-indigo-800 text-white px-3 py-2 sm:px-4 sm:py-2.5 rounded-full shadow-2xl flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-bold border-2 border-white/40 dark:border-slate-700 transition-all hover:scale-105 active:scale-95 group cursor-pointer shadow-blue-500/30" title="¿Qué podemos mejorar o qué te gustaría agregar?">
+    <div class="relative flex items-center justify-center">
+      <i class="iconoir-chat-bubble-empty text-base sm:text-lg group-hover:scale-110 transition-transform"></i>
+      <span class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-400 rounded-full border-2 border-white dark:border-slate-900 animate-pulse"></span>
+    </div>
+    <span class="hidden sm:inline tracking-tight">¿Qué quieres mejorar o agregar?</span>
+    <span class="sm:hidden text-xs font-bold tracking-tight">¿Ideas o Mejoras?</span>
+  </button>
+
+  <!-- Script JS modular -->
+  <script src="./app.js"></script>
+</body>
+</html>
