@@ -2,10 +2,23 @@ import sqlite3
 import json
 import hashlib
 import hmac
+import os
+import shutil
 from pathlib import Path
 from datetime import datetime
 
-DB_PATH = Path(__file__).parent / "smartquote.db"
+# En entornos serverless como Vercel, el directorio de la aplicación es de solo lectura.
+# Por lo tanto, la base de datos SQLite se almacena en /tmp para permitir escrituras.
+if os.environ.get("VERCEL"):
+    DB_PATH = Path("/tmp/smartquote.db")
+    src_db = Path(__file__).parent / "smartquote.db"
+    if not DB_PATH.exists() and src_db.exists():
+        try:
+            shutil.copyfile(src_db, DB_PATH)
+        except Exception:
+            pass
+else:
+    DB_PATH = Path(__file__).parent / "smartquote.db"
 
 def generar_token_seguridad(codigo: str, emisor_doc: str, total: float, anticipo: float, numero_pago: str) -> str:
     """Genera un hash criptográfico de integridad SHA-256 para prevenir hackeos, manipulación de montos o cambio de cuenta/QR."""
