@@ -1,17 +1,17 @@
-{
-  "version": 2,
-  "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "/api/index.py"
-    },
-    {
-      "source": "/api",
-      "destination": "/api/index.py"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/frontend/$1"
-    }
-  ]
-}
+import os
+import sys
+from pathlib import Path
+
+ROOT_DIR = Path(__file__).resolve().parent.parent
+BACKEND_DIR = ROOT_DIR / "backend"
+
+if str(BACKEND_DIR) not in sys.path:
+    sys.path.insert(0, str(BACKEND_DIR))
+
+from app import app
+
+# Exporta la app Flask para el runtime de Vercel (Serverless WSGI).
+# Este wrapper mantiene la lógica central en backend/app.py y evita problemas con rutas relativas.
+app = app
+app.static_folder = str(ROOT_DIR / "frontend")
+app.static_url_path = ""
